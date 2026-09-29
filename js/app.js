@@ -1,5 +1,5 @@
 // App logic: rendering, routing and the episode matcher.
-// Data lives in data/, auth lives in auth/. This file only reads session state through isAdmin() and session.
+// Data lives in data/, auth lives in auth/, the admin editor in js/admin.js. This file only reads session state through isAdmin() and session.
 const SELF_HOSTED = true; // true when this file is on your own domain: the episode page then embeds the YouTube player directly
 
 const app = document.getElementById("app");
@@ -174,10 +174,11 @@ function route() {
   const h = (location.hash || "#home").slice(1);
   if (h === "login") return renderLogin("#home");
   if (REQUIRE_LOGIN && !session) return renderLogin(location.hash);
-  if (h === "admin-new-episode") return renderAdminStub("Add episode");
-  if (h === "admin-shows") return renderAdminStub("Edit shows");
-  if (h.startsWith("admin-edit-show-")) { const s = showById(h.slice(16)); return s ? renderAdminStub("Edit show: " + s.name) : renderHome(); }
-  if (h.startsWith("admin-edit-")) { const e = EPISODES.find(x => x.id === h.slice(11)); return e ? renderAdminStub("Edit episode: " + e.title) : renderHome(); }
+  if (h === "admin-new-episode") return renderAdmin("episode");
+  if (h === "admin-shows") return renderAdmin("shows");
+  if (h === "admin-new-show") return renderAdmin("show");
+  if (h.startsWith("admin-edit-show-")) return renderAdmin("show", h.slice(16));
+  if (h.startsWith("admin-edit-")) return renderAdmin("episode", h.slice(11));
   if (h === "home" || h === "") return renderHome();
   if (h === "find") return renderFind(false);
   if (h === "shows") { renderHome(); document.getElementById("shows").scrollIntoView(); return; }
