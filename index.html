@@ -1,0 +1,552 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Every new episode from The EKO System, Court Ordered and Keystone Sessions, in one place.">
+<title>Keystone Podcast Network</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a record-sleeve feed. Wide masthead, a narrow "what do you want to listen to" strip, then episodes as
+   horizontal rows (show stripe / meta / title / people) rather than uniform cards. Episode page = play block, transcript, notes. */
+:root {
+  --bg: #EEF0F2;
+  --surface: #FFFFFF;
+  --ink: #16191D;
+  --muted: #5F6772;
+  --line: #D6DAE0;
+  --accent: #E8492E;
+  --accent-ink: #FFFFFF;
+  --eko: #C99A2E;
+  --court: #1F8A8A;
+  --sessions: #6A4FD8;
+  --display: "Instrument Serif", Georgia, "Times New Roman", serif;
+  --body: "IBM Plex Sans", "Helvetica Neue", Arial, sans-serif;
+  --mono: "IBM Plex Mono", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #14171B; --surface: #1D2126; --ink: #ECEEF0; --muted: #9AA3AE; --line: #2E343B;
+    --accent: #FF6A4D; --accent-ink: #16191D; --eko: #E0B24A; --court: #35B3B3; --sessions: #9A85F0;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #14171B; --surface: #1D2126; --ink: #ECEEF0; --muted: #9AA3AE; --line: #2E343B;
+  --accent: #FF6A4D; --accent-ink: #16191D; --eko: #E0B24A; --court: #35B3B3; --sessions: #9A85F0;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 16px; line-height: 1.5; margin: 0; }
+a { color: inherit; }
+button { font: inherit; cursor: pointer; }
+.wrap { max-width: 1100px; margin: 0 auto; padding-inline: 20px; padding-block: 0; }
+h1, h2, h3 { font-family: var(--display); font-weight: 400; line-height: 1.05; text-wrap: balance; margin: 0; }
+.eyebrow { font-family: var(--mono); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* header */
+.top { position: sticky; top: env(safe-area-inset-top, 0px); background: var(--bg); border-bottom: 1px solid var(--line); z-index: 5; }
+.top .wrap { display: flex; align-items: center; justify-content: space-between; gap: 16px; height: 60px; }
+.brand { font-family: var(--display); font-size: 24px; text-decoration: none; }
+.brand em { color: var(--accent); font-style: italic; }
+.nav { display: flex; gap: 6px; }
+.nav a { text-decoration: none; font-size: 14px; padding: 6px 10px; border-radius: 999px; color: var(--muted); }
+.nav a[aria-current="page"] { color: var(--ink); background: var(--surface); box-shadow: inset 0 0 0 1px var(--line); }
+
+/* masthead */
+.mast { padding-block: 48px 32px; display: grid; grid-template-columns: 1.2fr .8fr; gap: 32px; align-items: end; }
+.mast h1 { font-size: clamp(44px, 7vw, 84px); letter-spacing: -.01em; }
+.mast p { color: var(--muted); max-width: 44ch; margin: 12px 0 0; }
+.shows { display: grid; gap: 8px; }
+.show-row { display: grid; grid-template-columns: 6px 1fr auto; gap: 12px; align-items: center; background: var(--surface); border: 1px solid var(--line); padding: 10px 12px; text-decoration: none; }
+.show-row .stripe { width: 6px; height: 100%; min-height: 36px; background: var(--show); }
+.show-row strong { font-weight: 600; font-size: 15px; display: block; }
+.show-row span { color: var(--muted); font-size: 13px; }
+.show-row .count { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+
+/* ask strip */
+.ask { background: var(--ink); color: var(--bg); padding: 28px; margin-block: 8px 40px; display: grid; grid-template-columns: 1fr auto; gap: 20px; align-items: center; }
+.ask h2 { font-size: 34px; }
+.ask p { margin: 6px 0 0; opacity: .75; font-size: 15px; }
+.btn { background: var(--accent); color: var(--accent-ink); border: 0; padding: 12px 20px; font-weight: 600; font-size: 15px; border-radius: 999px; }
+.btn.ghost { background: transparent; color: inherit; box-shadow: inset 0 0 0 1px currentColor; }
+.btn.small { padding: 8px 14px; font-size: 14px; }
+
+/* episode list */
+.section-head { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; margin-bottom: 14px; }
+.section-head h2 { font-size: 30px; }
+.filters { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { border: 1px solid var(--line); background: var(--surface); color: var(--muted); border-radius: 999px; padding: 5px 12px; font-size: 13px; }
+.chip[aria-pressed="true"] { border-color: var(--ink); color: var(--ink); }
+.ep-list { display: grid; gap: 0; border-top: 1px solid var(--line); margin-bottom: 56px; }
+.ep { display: grid; grid-template-columns: 6px 150px 1fr 210px; gap: 20px; padding: 20px 0; border-bottom: 1px solid var(--line); text-decoration: none; align-items: start; min-width: 0; }
+.ep:hover .ep-title { color: var(--accent); }
+.ep .stripe { background: var(--show); height: 100%; min-height: 40px; }
+.ep-meta { font-family: var(--mono); font-size: 12px; color: var(--muted); display: grid; gap: 4px; }
+.ep-meta .showname { color: var(--show); font-weight: 500; }
+.ep-main { min-width: 0; }
+.ep-title { font-family: var(--display); font-size: 28px; line-height: 1.1; margin: 0 0 6px; }
+.ep-sum { color: var(--muted); font-size: 15px; margin: 0 0 10px; max-width: 62ch; }
+.topics { display: flex; flex-wrap: wrap; gap: 6px; }
+.topics span { font-size: 12px; border: 1px solid var(--line); border-radius: 4px; padding: 2px 8px; color: var(--muted); }
+.people { font-size: 14px; display: grid; gap: 6px; }
+.people .p { display: grid; grid-template-columns: 30px 1fr; gap: 8px; align-items: center; }
+.avatar { width: 30px; height: 30px; border-radius: 50%; background: var(--show); color: #fff; font-family: var(--mono); font-size: 11px; display: grid; place-items: center; font-weight: 500; }
+.people small { display: block; color: var(--muted); font-size: 12px; }
+.dur { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.badge { display: inline-block; font-family: var(--mono); font-size: 11px; letter-spacing: .06em; text-transform: uppercase; padding: 2px 6px; background: var(--surface); border: 1px solid var(--line); color: var(--muted); }
+
+/* recommend page */
+.form-card { background: var(--surface); border: 1px solid var(--line); padding: 28px; margin-block: 32px; display: grid; gap: 24px; }
+.form-card h1 { font-size: clamp(36px, 5vw, 56px); }
+fieldset { border: 0; padding: 0; margin: 0; display: grid; gap: 10px; }
+legend { font-weight: 600; font-size: 15px; padding: 0; margin-bottom: 4px; }
+.choices { display: flex; flex-wrap: wrap; gap: 8px; }
+.choices label { border: 1px solid var(--line); border-radius: 999px; padding: 7px 14px; font-size: 14px; cursor: pointer; display: inline-flex; gap: 8px; align-items: center; }
+.choices input { accent-color: var(--accent); margin: 0; }
+.choices label:has(input:checked) { border-color: var(--accent); color: var(--accent); }
+textarea { width: 100%; border: 1px solid var(--line); background: var(--bg); color: var(--ink); font: inherit; padding: 10px 12px; border-radius: 6px; min-height: 70px; resize: vertical; }
+.results-head { display: flex; gap: 16px; align-items: baseline; justify-content: space-between; margin-bottom: 14px; }
+.match { font-family: var(--mono); font-size: 12px; color: var(--accent); }
+.why { font-size: 13px; color: var(--muted); margin-top: 8px; }
+
+/* episode page */
+.ep-hero { padding-block: 36px 24px; display: grid; gap: 14px; }
+.ep-hero h1 { font-size: clamp(36px, 5.5vw, 64px); max-width: 20ch; }
+.ep-hero .line { display: flex; flex-wrap: wrap; gap: 14px; font-family: var(--mono); font-size: 13px; color: var(--muted); align-items: center; }
+.play { display: grid; grid-template-columns: 1fr; background: var(--surface); border: 1px solid var(--line); overflow: hidden; margin-bottom: 40px; }
+.play .video { aspect-ratio: 16/9; max-width: 100%; background: linear-gradient(135deg, var(--show), var(--ink)); display: grid; place-items: center; text-decoration: none; color: #fff; position: relative; overflow: hidden; }
+.play .video .thumb { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.play .video::after { content: ""; position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,.55), rgba(0,0,0,.05) 50%); }
+.play .video .pb { position: relative; z-index: 1; }
+.play .video .cap { z-index: 1; }
+.play .video .pb { width: 88px; height: 88px; border-radius: 50%; background: rgba(255,255,255,.92); display: grid; place-items: center; box-shadow: 0 8px 30px rgba(0,0,0,.35); transition: transform .15s; }
+.play .video:hover .pb { transform: scale(1.06); }
+.play .video .pb svg { margin-left: 6px; }
+.play .video .cap { position: absolute; left: 18px; bottom: 14px; font-family: var(--mono); font-size: 12px; opacity: .85; }
+.play iframe { width: 100%; aspect-ratio: 16/9; border: 0; display: block; }
+.play .cast { padding: 18px 22px; display: flex; flex-wrap: wrap; gap: 22px; border-top: 1px solid var(--line); }
+.cast .p { display: grid; grid-template-columns: 36px 1fr; gap: 10px; align-items: center; font-size: 14px; }
+.cast .avatar { width: 36px; height: 36px; font-size: 12px; }
+.two { display: grid; grid-template-columns: 1fr 300px; gap: 40px; align-items: start; margin-bottom: 64px; }
+.two > * { min-width: 0; }
+.tx-head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; align-items: center; margin-bottom: 14px; }
+.tx-head h2 { font-size: 30px; }
+.tx-search { border: 1px solid var(--line); background: var(--surface); color: var(--ink); font: inherit; font-size: 14px; padding: 8px 12px; border-radius: 6px; width: 240px; max-width: 100%; }
+.tx { display: grid; gap: 0; border-top: 1px solid var(--line); }
+.cue { display: grid; grid-template-columns: 64px 110px 1fr; gap: 14px; padding: 12px 0; border-bottom: 1px solid var(--line); font-size: 15px; }
+.cue .t { font-family: var(--mono); font-size: 12px; color: var(--muted); padding-top: 3px; text-decoration: none; }
+.cue .t:hover { color: var(--accent); }
+.cue .sp { font-weight: 600; font-size: 13px; padding-top: 2px; color: var(--show); }
+.cue p { margin: 0; max-width: 68ch; }
+.cue mark { background: var(--accent); color: var(--accent-ink); padding: 0 2px; }
+.tx-empty { color: var(--muted); padding: 20px 0; }
+aside.notes { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 76px); display: grid; gap: 22px; }
+.notes h2 { font-size: 30px; }
+.notes h3 { font-family: var(--body); font-weight: 600; font-size: 13px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
+.notes ul, .notes ol { margin: 0; padding-left: 18px; font-size: 14px; display: grid; gap: 6px; }
+.notes .chap { display: grid; grid-template-columns: 52px 1fr; gap: 8px; font-size: 14px; }
+.notes .chap a { font-family: var(--mono); font-size: 12px; color: var(--muted); text-decoration: none; padding-top: 2px; }
+.notes .chap a:hover { color: var(--accent); }
+.more { border-top: 1px solid var(--line); padding-top: 24px; margin-bottom: 56px; }
+.more h2 { font-size: 26px; margin-bottom: 12px; }
+
+.sample { font-family: var(--mono); font-size: 12px; color: var(--muted); border: 1px dashed var(--line); padding: 8px 12px; margin-block: 8px 0; }
+footer { border-top: 1px solid var(--line); padding-block: 24px 40px; color: var(--muted); font-size: 13px; display: flex; flex-wrap: wrap; gap: 16px; justify-content: space-between; }
+.back { text-decoration: none; color: var(--muted); font-size: 14px; }
+
+@media (max-width: 760px) {
+  .mast { grid-template-columns: 1fr; padding-block: 32px 24px; }
+  .ask { grid-template-columns: 1fr; padding: 20px; }
+  .ep { grid-template-columns: 6px 1fr; }
+  .ep-meta { grid-column: 2; }
+  .ep-main { grid-column: 2; }
+  .people { grid-column: 2; }
+  .two { grid-template-columns: 1fr; }
+  aside.notes { position: static; }
+  .cue { grid-template-columns: 56px 1fr; }
+  .cue p { grid-column: 1 / -1; }
+  .nav a:not(:first-child) { display: none; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+</head>
+<body>
+<div class="top"><div class="wrap">
+  <a class="brand" href="#home">Keystone <em>Listens</em></a>
+  <nav class="nav" id="nav">
+    <a href="#home">Episodes</a>
+    <a href="#find">Find something to listen to</a>
+    <a href="#shows">Shows</a>
+  </nav>
+</div></div>
+
+<main class="wrap" id="app"></main>
+
+<footer class="wrap">
+  <span>Keystone Innovation District · 800 E 18th St, Kansas City</span>
+  <span>New episodes weekly across three shows</span>
+</footer>
+
+<script>
+/* ============================================================
+   DATA — replace this block with your real shows and episodes.
+   Every episode below is SAMPLE content so the layout has something to show.
+   Transcripts: run transcribe.py on the audio and paste the output into `transcript`.
+   ============================================================ */
+const SELF_HOSTED = true; // set true when this file is on your own domain: the episode page then embeds the YouTube player directly
+
+const SHOWS = [
+  { id: "eko", name: "The EKO System", color: "var(--eko)", org: "Black Excellence Inc.",
+    tagline: "Build the system that builds you. No fluff. Just game.",
+    hosts: ["Craig Moore II", "Craig Smith", "Erica Taylor-Murff"],
+    about: "Entrepreneurship, investing and building wealth outside the 9 to 5, for Black professionals in the KC metro." },
+  { id: "court", name: "Court Ordered", color: "var(--court)", org: "Magis",
+    tagline: "What actually happens inside treatment courts, and how to fix it.",
+    hosts: ["Judge Courtney Wachal"],
+    about: "A sitting municipal judge on treatment courts, recidivism, court funding and the data that could change all three." },
+  { id: "sessions", name: "Keystone Sessions", color: "var(--sessions)", org: "Keystone CoLAB",
+    tagline: "Wednesday night talks from the people building Kansas City.",
+    hosts: ["Keystone CoLAB"],
+    about: "Recorded live at Keystone CoLAB every Wednesday: three talks at 5, 6 and 7 pm from founders, builders and operators." }
+];
+
+const EPISODES = [
+  { id: "eko-012", show: "eko", format: "Panel", date: "2026-09-25", duration: 54,
+    title: "The Side Business Tax Playbook Nobody Gave You",
+    summary: "The three hosts walk through entity choice, quarterly estimates and the write-offs first-time owners leave on the table.",
+    topics: ["Side business", "Taxes", "Entity setup", "Cash flow"],
+    people: [{ n: "Craig Moore II", r: "Host" }, { n: "Craig Smith", r: "Co-host" }, { n: "Erica Taylor-Murff", r: "Co-host" }],
+    youtube: "dQw4w9WgXcQ",
+    transcript: [
+      { t: 0, s: "Craig Moore II", x: "Welcome back to The EKO System. Today is the tax episode, and I know half of you just groaned, but this is the one that pays for itself." },
+      { t: 41, s: "Erica Taylor-Murff", x: "The number one question I get from people starting a side business is LLC or not. And the answer is it depends on what you are protecting." },
+      { t: 118, s: "Craig Smith", x: "Let's talk quarterly estimates, because the first year is where people get the surprise bill in April." },
+      { t: 402, s: "Craig Moore II", x: "Here is the list. Home office, mileage, that laptop, the software you already pay for. Write it down, keep the receipt, move on." },
+      { t: 1560, s: "Erica Taylor-Murff", x: "If you take one thing from this episode: open a separate bank account this week. Everything else gets easier." },
+      { t: 3100, s: "Craig Moore II", x: "That's the game. Full checklist is on Patreon. See you in two weeks." }
+    ],
+    notes: {
+      takeaways: ["Separate business banking is the first move, before any entity paperwork", "Quarterly estimates matter from year one, not once you are profitable", "The common write-offs most first-time owners miss"],
+      chapters: [[0, "Why the tax episode"], [41, "LLC or sole prop"], [118, "Quarterly estimates"], [402, "Write-offs checklist"], [1560, "One thing to do this week"]],
+      links: [["Patreon: full tax checklist", "https://www.patreon.com"], ["Missouri LLC filing", "https://www.sos.mo.gov"]]
+    } },
+  { id: "eko-011", show: "eko", format: "Interview", date: "2026-09-11", duration: 38,
+    title: "From Corporate Sales to Three Franchise Locations",
+    summary: "A Johnson County franchise owner on the year he kept his day job, how he financed location one, and what he would skip.",
+    topics: ["Franchising", "Financing", "Leaving corporate", "Johnson County"],
+    people: [{ n: "Craig Moore II", r: "Host" }, { n: "Marcus Bell", r: "Guest · franchise owner (sample)" }],
+    youtube: "dQw4w9WgXcQ",
+    transcript: [
+      { t: 0, s: "Craig Moore II", x: "This is a solo host episode, and my guest today ran enterprise sales for nine years before buying his first franchise." },
+      { t: 95, s: "Marcus Bell", x: "I kept the job for fourteen months after signing. People think that is cheating. It is how I slept at night." },
+      { t: 620, s: "Marcus Bell", x: "SBA 7(a) covered about seventy percent. The rest was savings and one uncomfortable family conversation." },
+      { t: 1900, s: "Craig Moore II", x: "What would you skip if you did it again?" },
+      { t: 1912, s: "Marcus Bell", x: "The second location came too fast. I would have waited another year and hired a GM first." }
+    ],
+    notes: {
+      takeaways: ["Keeping a salary through the first year of a franchise is a strategy, not a failure", "SBA 7(a) loans and what they do and don't cover", "Hire a general manager before opening location two"],
+      chapters: [[0, "Nine years in sales"], [95, "Keeping the day job"], [620, "How location one was financed"], [1900, "What to skip"]],
+      links: [["SBA 7(a) loan overview", "https://www.sba.gov"]]
+    } },
+  { id: "eko-010", show: "eko", format: "Panel", date: "2026-08-28", duration: 61,
+    title: "Index Funds, Real Estate or Your Own Business: Where the First $10K Goes",
+    summary: "The hosts disagree on purpose. A full-group episode on the first real investing decision for people earning $60K to $150K.",
+    topics: ["Investing", "Real estate", "Index funds", "Wealth building"],
+    people: [{ n: "Craig Moore II", r: "Host" }, { n: "Craig Smith", r: "Co-host" }, { n: "Erica Taylor-Murff", r: "Co-host" }],
+    youtube: "dQw4w9WgXcQ",
+    transcript: [
+      { t: 0, s: "Craig Moore II", x: "We are going to argue today. That's the format. First ten thousand dollars, where does it go." },
+      { t: 210, s: "Craig Smith", x: "Boring answer wins. Max the match, then a total market fund. You can get creative after that." },
+      { t: 880, s: "Erica Taylor-Murff", x: "I'm the real estate person on this panel and even I am saying: not with your first ten." }
+    ],
+    notes: {
+      takeaways: ["Employer match first, every time", "Real estate needs a bigger cushion than most first-timers think", "Investing in your own business is a bet on your time, so price it that way"],
+      chapters: [[0, "The setup"], [210, "The boring answer"], [880, "Real estate, honestly"]],
+      links: []
+    } },
+
+  { id: "court-006", show: "court", format: "Interview", date: "2026-09-22", duration: 47,
+    title: "What a Treatment Court Costs, and What It Saves",
+    summary: "A court administrator breaks down the real per-participant cost of a drug court against the cost of a jail bed, and why the numbers rarely reach the people who set budgets.",
+    topics: ["Treatment courts", "Court funding", "Recidivism", "Public data"],
+    people: [{ n: "Judge Courtney Wachal", r: "Host" }, { n: "Dana Okafor", r: "Guest · court administrator (sample)" }],
+    youtube: "dQw4w9WgXcQ",
+    transcript: [
+      { t: 0, s: "Courtney Wachal", x: "I sit in a domestic violence court every week and I still could not tell you, to the dollar, what one participant costs us. That's the problem this show exists to fix." },
+      { t: 130, s: "Dana Okafor", x: "Nationally the range is roughly four to eight thousand a year per participant. A jail bed in most Missouri counties is north of thirty." },
+      { t: 990, s: "Dana Okafor", x: "The savings show up in a different department's budget three years later. Nobody claims them, so nobody funds the program." },
+      { t: 2400, s: "Courtney Wachal", x: "So the fix is not more money. It is being able to show the money." }
+    ],
+    notes: {
+      takeaways: ["Per-participant cost versus incarceration cost, with the ranges actually used in budget conversations", "Why savings land in a different budget than the spend", "What a court would need to track to make the case itself"],
+      chapters: [[0, "Why the numbers are invisible"], [130, "Cost per participant"], [990, "Where the savings go"], [2400, "Showing the money"]],
+      links: [["Magis", "https://www.magis.ai"], ["NADCP treatment court standards", "https://allrise.org"]]
+    } },
+  { id: "court-005", show: "court", format: "Solo", date: "2026-09-08", duration: 22,
+    title: "Five Things I Wish Every First-Time Participant Knew",
+    summary: "A short solo episode for people about to enter a treatment court program, and for the families walking in with them.",
+    topics: ["Treatment courts", "Participants", "Families", "Court process"],
+    people: [{ n: "Judge Courtney Wachal", r: "Host" }],
+    youtube: "dQw4w9WgXcQ",
+    transcript: [
+      { t: 0, s: "Courtney Wachal", x: "Short one today. No guest. Five things I say from the bench that I wish people had heard before they walked in." },
+      { t: 60, s: "Courtney Wachal", x: "One. Showing up is most of it. I mean that literally. Attendance is the strongest predictor we have." },
+      { t: 700, s: "Courtney Wachal", x: "Five. Bring someone. The people who graduate almost always had one person in the gallery." }
+    ],
+    notes: {
+      takeaways: ["Attendance predicts completion more than anything else", "Sanctions are structured, not personal", "Bring a support person to hearings"],
+      chapters: [[0, "Why this episode"], [60, "Showing up"], [700, "Bring someone"]],
+      links: []
+    } },
+  { id: "court-004", show: "court", format: "Interview", date: "2026-08-25", duration: 55,
+    title: "Can a Dashboard Change a Sentence? Data Inside the Courtroom",
+    summary: "Magis co-founder Thaddeus Diamond on what courts currently record, what they throw away, and what a judge could see at the bench if the data were there.",
+    topics: ["Court data", "AI in courts", "Recidivism", "Technology"],
+    people: [{ n: "Judge Courtney Wachal", r: "Host" }, { n: "Thaddeus Diamond", r: "Guest · Magis co-founder" }],
+    youtube: "dQw4w9WgXcQ",
+    transcript: [
+      { t: 0, s: "Courtney Wachal", x: "My co-founder is on today, which means we are going to disagree in public." },
+      { t: 300, s: "Thaddeus Diamond", x: "Most courts already collect what they need. It is in three systems that do not talk to each other and one filing cabinet." },
+      { t: 1500, s: "Thaddeus Diamond", x: "The goal is not for a model to recommend a sentence. It is for a judge to see one screen instead of six." }
+    ],
+    notes: {
+      takeaways: ["Courts collect more than they can use", "The realistic role of software at the bench", "What pilot courts are asking for first"],
+      chapters: [[0, "Disagreeing in public"], [300, "What courts already record"], [1500, "One screen, not six"]],
+      links: [["Magis", "https://www.magis.ai"]]
+    } },
+
+  { id: "sess-0923", show: "sessions", format: "Talk", date: "2026-09-23", duration: 48,
+    title: "How JE Dunn Builds a Building Before It Exists",
+    summary: "JE Dunn's Evan Fox and Dylan Lowder on virtual design and construction: the digital twin, clash detection, and what changes when the whole crew can see the model on site.",
+    topics: ["Construction tech", "Virtual design", "Architecture", "Kansas City"],
+    people: [{ n: "Evan Fox", r: "Principal Architect, JE Dunn" }, { n: "Dylan Lowder", r: "VDC Director, JE Dunn" }],
+    youtube: "dQw4w9WgXcQ",
+    transcript: [
+      { t: 0, s: "Evan Fox", x: "Thanks for having us. Dylan is going to show you a building we finished last year, and then the version of it we built first, on a screen." },
+      { t: 420, s: "Dylan Lowder", x: "Clash detection sounds boring until you realize every clash we catch here is a change order we do not write later." },
+      { t: 1800, s: "Evan Fox", x: "The model on a tablet in a foreman's hand changed more about our job sites than any tool in the last twenty years." }
+    ],
+    notes: {
+      takeaways: ["Why the digital model gets built before the physical one", "Clash detection as change-order prevention", "Field crews using the model on site"],
+      chapters: [[0, "Intro"], [420, "Clash detection"], [1800, "The model in the field"]],
+      links: [["JE Dunn", "https://www.jedunn.com"], ["Keystone Sessions schedule", "https://www.keystonekc.org"]]
+    } },
+  { id: "sess-0812", show: "sessions", format: "Talk", date: "2026-08-12", duration: 41,
+    title: "John Austin on Building Companies People Actually Want to Work For",
+    summary: "A 5 pm Session on culture as an operating system: hiring, the first ten employees, and the rituals that survive growth.",
+    topics: ["Leadership", "Hiring", "Company culture", "Startups"],
+    people: [{ n: "John Austin", r: "Speaker" }],
+    youtube: "dQw4w9WgXcQ",
+    transcript: [
+      { t: 0, s: "John Austin", x: "Every founder says culture matters. Almost none of them can tell me what their culture does on a Tuesday." },
+      { t: 900, s: "John Austin", x: "The first ten hires are your culture. Everyone after that is inheriting it." }
+    ],
+    notes: {
+      takeaways: ["Culture is what your company does on an ordinary day", "The first ten hires set it", "Rituals that survive from 10 to 100 people"],
+      chapters: [[0, "What culture does on a Tuesday"], [900, "The first ten hires"]],
+      links: []
+    } },
+  { id: "sess-0909", show: "sessions", format: "Talk", date: "2026-09-09", duration: 36,
+    title: "Shipping an AI Product With a Team of Two",
+    summary: "A Keystone CoFoundry member walks through the stack, the costs and the mistakes behind getting an AI product to its first fifty paying customers.",
+    topics: ["AI", "Startups", "Product", "CoFoundry"],
+    people: [{ n: "Priya Natarajan", r: "Founder, CoFoundry member (sample)" }],
+    youtube: "dQw4w9WgXcQ",
+    transcript: [
+      { t: 0, s: "Priya Natarajan", x: "We are two people. Here is exactly what we pay every month and what we would cut first." },
+      { t: 1100, s: "Priya Natarajan", x: "Our first fifty customers came from nine conversations at this building. That is the whole growth strategy." }
+    ],
+    notes: {
+      takeaways: ["A real monthly cost breakdown for a two-person AI product", "Where the first fifty customers came from", "What to cut when runway gets short"],
+      chapters: [[0, "The stack and the bill"], [1100, "First fifty customers"]],
+      links: [["CoFoundry", "https://www.keystonekc.org"]]
+    } }
+];
+
+/* ============================================================ */
+const app = document.getElementById("app");
+const showById = id => SHOWS.find(s => s.id === id);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const fmtDate = d => new Date(d + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+const fmtDur = m => m >= 60 ? `${Math.floor(m / 60)}h ${m % 60}m` : `${m} min`;
+const ts = s => { const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), x = s % 60; return (h ? h + ":" : "") + String(m).padStart(2, "0") + ":" + String(x).padStart(2, "0"); };
+const initials = n => n.replace(/^(Judge|Dr\.)\s+/, "").split(" ").filter(Boolean).slice(0, 2).map(w => w[0]).join("").toUpperCase();
+const yt = (id, t) => `https://www.youtube.com/watch?v=${id}${t ? "&t=" + t + "s" : ""}`;
+const ytThumb = id => `https://i.ytimg.com/vi/${id}/maxresdefault.jpg`; // YouTube's og:image; hqdefault.jpg is the fallback if the video has no HD thumbnail
+const sorted = () => [...EPISODES].sort((a, b) => b.date.localeCompare(a.date));
+
+function personHTML(p, show) {
+  return `<div class="p"><span class="avatar" style="--show:${show.color}">${esc(initials(p.n))}</span><span>${esc(p.n)}<small>${esc(p.r)}</small></span></div>`;
+}
+function episodeRow(e, extra = "") {
+  const s = showById(e.show);
+  return `<a class="ep" href="#${e.id}" style="--show:${s.color}">
+    <span class="stripe"></span>
+    <div class="ep-meta"><span class="showname">${esc(s.name)}</span><span>${esc(e.format)} · ${fmtDate(e.date)}</span><span class="dur">${fmtDur(e.duration)}</span>${extra}</div>
+    <div class="ep-main"><h3 class="ep-title">${esc(e.title)}</h3><p class="ep-sum">${esc(e.summary)}</p>
+      <div class="topics">${e.topics.map(t => `<span>${esc(t)}</span>`).join("")}</div></div>
+    <div class="people">${e.people.map(p => personHTML(p, s)).join("")}</div>
+  </a>`;
+}
+
+/* ---------- home ---------- */
+let filter = "all";
+function renderHome() {
+  const list = sorted().filter(e => filter === "all" || e.show === filter);
+  const count = id => EPISODES.filter(e => e.show === id).length;
+  app.innerHTML = `
+  <section class="mast">
+    <div><p class="eyebrow">Kansas City · three shows · new episodes weekly</p>
+      <h1>Every new episode, in one place.</h1>
+      <p>Browse what just dropped, or tell us what you're in the mood for and we'll pick for you.</p></div>
+    <div class="shows" id="shows">${SHOWS.map(s => `<a class="show-row" href="#show-${s.id}" style="--show:${s.color}"><span class="stripe"></span><span><strong>${esc(s.name)}</strong><span>${esc(s.tagline)}</span></span><span class="count">${count(s.id)} ep</span></a>`).join("")}</div>
+  </section>
+  <section class="ask"><div><h2>Not sure what to play?</h2><p>Answer three quick questions and get episodes matched to your topic, your time and how you like to listen.</p></div>
+    <a class="btn" href="#find">Find me an episode</a></section>
+  <section>
+    <div class="section-head"><h2>New episodes</h2>
+      <div class="filters">${[["all", "All shows"], ...SHOWS.map(s => [s.id, s.name])].map(([id, n]) => `<button class="chip" data-filter="${id}" aria-pressed="${filter === id}">${esc(n)}</button>`).join("")}</div></div>
+    <div class="ep-list">${list.map(e => episodeRow(e)).join("")}</div>
+  </section>
+  <p class="sample">Sample episodes and guests. Replace the DATA block at the top of the script with your real feed.</p>`;
+  app.querySelectorAll("[data-filter]").forEach(b => b.onclick = () => { filter = b.dataset.filter; renderHome(); });
+  setNav("#home");
+}
+
+/* ---------- find (form + results) ---------- */
+const TOPICS = ["Entrepreneurship", "Investing", "Taxes", "Real estate", "Franchising", "Leadership", "Hiring", "AI", "Startups", "Construction tech", "Treatment courts", "Court data", "Kansas City"];
+const TOPIC_MAP = { "Entrepreneurship": ["Side business", "Franchising", "Startups", "Product", "Leaving corporate", "Wealth building"], "Investing": ["Investing", "Index funds", "Real estate", "Wealth building", "Financing"], "Taxes": ["Taxes", "Entity setup", "Cash flow"], "Real estate": ["Real estate"], "Franchising": ["Franchising", "Financing"], "Leadership": ["Leadership", "Company culture"], "Hiring": ["Hiring", "Company culture"], "AI": ["AI", "AI in courts", "Technology", "Court data"], "Startups": ["Startups", "Product", "CoFoundry", "Side business"], "Construction tech": ["Construction tech", "Virtual design", "Architecture"], "Treatment courts": ["Treatment courts", "Recidivism", "Court funding", "Participants", "Families", "Court process"], "Court data": ["Court data", "Public data", "Court funding", "AI in courts"], "Kansas City": ["Kansas City", "Johnson County", "CoFoundry"] };
+let prefs = { topics: [], time: "any", format: "any", show: "any", free: "" };
+
+function score(e) {
+  let pts = 0, why = [];
+  const wanted = new Set(prefs.topics.flatMap(t => TOPIC_MAP[t] || [t]));
+  const hit = e.topics.filter(t => wanted.has(t));
+  if (prefs.topics.length) { pts += hit.length * 3; if (hit.length) why.push("covers " + hit.slice(0, 2).join(" and ")); }
+  if (prefs.time !== "any") {
+    const ok = prefs.time === "short" ? e.duration <= 25 : prefs.time === "medium" ? e.duration > 25 && e.duration <= 50 : e.duration > 50;
+    if (ok) { pts += 2; why.push("fits your " + { short: "quick", medium: "commute-length", long: "long" }[prefs.time] + " window"); } else pts -= 2;
+  }
+  if (prefs.format !== "any") { if (e.format === prefs.format) { pts += 2; why.push(e.format.toLowerCase() + " format"); } else pts -= 1; }
+  if (prefs.show !== "any") { if (e.show === prefs.show) { pts += 2; } else pts -= 3; }
+  const words = prefs.free.toLowerCase().split(/\W+/).filter(w => w.length > 3);
+  const hay = (e.title + " " + e.summary + " " + e.topics.join(" ") + " " + e.people.map(p => p.n).join(" ")).toLowerCase();
+  const fw = words.filter(w => hay.includes(w));
+  if (fw.length) { pts += fw.length * 2; why.push("mentions " + fw.slice(0, 2).join(", ")); }
+  return { pts, why };
+}
+
+function renderFind(showResults) {
+  const chk = (name, v, label, type = "radio") => `<label><input type="${type}" name="${name}" value="${v}" id="${name}-${v.replace(/\W/g, "")}" ${type === "radio" ? (prefs[name] === v ? "checked" : "") : (prefs.topics.includes(v) ? "checked" : "")}>${esc(label)}</label>`;
+  let results = "";
+  if (showResults) {
+    const ranked = EPISODES.map(e => ({ e, ...score(e) })).filter(r => r.pts > 0).sort((a, b) => b.pts - a.pts || b.e.date.localeCompare(a.e.date)).slice(0, 5);
+    results = `<section id="results"><div class="results-head"><h2>${ranked.length ? "Your picks" : "Nothing matched everything"}</h2><span class="eyebrow">${ranked.length} episode${ranked.length === 1 ? "" : "s"}</span></div>
+      ${ranked.length ? `<div class="ep-list">${ranked.map(r => episodeRow(r.e, `<span class="match">Match: ${r.why.join(" · ") || "recent"}</span>`)).join("")}</div>` : `<p class="tx-empty">Try fewer topics or set the time window to "Any length".</p>`}</section>`;
+  }
+  app.innerHTML = `
+  <form class="form-card" id="find-form">
+    <div><p class="eyebrow">Find something to listen to</p><h1>What do you want to listen to?</h1></div>
+    <fieldset><legend>Topics you're interested in</legend><div class="choices">${TOPICS.map(t => chk("topics", t, t, "checkbox")).join("")}</div></fieldset>
+    <fieldset><legend>How much time do you have?</legend><div class="choices">${[["any", "Any length"], ["short", "Under 25 min"], ["medium", "25 to 50 min"], ["long", "Over 50 min"]].map(([v, l]) => chk("time", v, l)).join("")}</div></fieldset>
+    <fieldset><legend>How do you like to listen?</legend><div class="choices">${[["any", "Doesn't matter"], ["Interview", "One-on-one interview"], ["Panel", "Group conversation"], ["Solo", "Solo host"], ["Talk", "Live talk"]].map(([v, l]) => chk("format", v, l)).join("")}</div></fieldset>
+    <fieldset><legend>Any particular show?</legend><div class="choices">${[["any", "Any show"], ...SHOWS.map(s => [s.id, s.name])].map(([v, l]) => chk("show", v, l)).join("")}</div></fieldset>
+    <fieldset><legend for="free">Anything else? (optional)</legend><textarea id="free" name="free" placeholder="e.g. I'm thinking about buying a franchise and want to hear from someone who did it">${esc(prefs.free)}</textarea></fieldset>
+    <div><button class="btn" type="submit">Show me episodes</button></div>
+  </form>
+  ${results}`;
+  const form = document.getElementById("find-form");
+  form.onsubmit = ev => {
+    ev.preventDefault();
+    const fd = new FormData(form);
+    prefs = { topics: fd.getAll("topics"), time: fd.get("time"), format: fd.get("format"), show: fd.get("show"), free: fd.get("free") || "" };
+    renderFind(true);
+    document.getElementById("results").scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+  setNav("#find");
+}
+
+/* ---------- show page ---------- */
+function renderShow(id) {
+  const s = showById(id); if (!s) return renderHome();
+  const list = sorted().filter(e => e.show === id);
+  app.innerHTML = `
+  <section class="ep-hero" style="--show:${s.color}"><a class="back" href="#home">← All episodes</a>
+    <p class="eyebrow" style="color:var(--show)">${esc(s.org)}</p><h1>${esc(s.name)}</h1>
+    <p style="max-width:56ch;color:var(--muted);margin:0">${esc(s.about)}</p>
+    <div class="line"><span>Hosted by ${esc(s.hosts.join(", "))}</span><span>${list.length} episodes</span></div></section>
+  <div class="ep-list">${list.map(e => episodeRow(e)).join("")}</div>`;
+  setNav("#shows");
+}
+
+/* ---------- episode page ---------- */
+function renderEpisode(e) {
+  const s = showById(e.show);
+  const fam = t => Object.keys(TOPIC_MAP).filter(k => TOPIC_MAP[k].includes(t)); // topic families, so "Financing" relates to "Investing"
+  const mine = new Set(e.topics), myFam = new Set(e.topics.flatMap(fam));
+  const related = sorted().filter(x => x.id !== e.id).map(x => {
+    const shared = x.topics.filter(t => mine.has(t));
+    const famShared = x.topics.filter(t => !mine.has(t) && fam(t).some(f => myFam.has(f)));
+    const other = x.show !== e.show;
+    return { x, shared, famShared, pts: shared.length * 3 + famShared.length + (other ? 2 : 0) };
+  }).filter(r => r.shared.length || r.famShared.length).sort((a, b) => b.pts - a.pts || b.x.date.localeCompare(a.x.date));
+  // always lead with another show when one shares a topic, then fill from the rest
+  const pick = [], firstOther = related.find(r => r.x.show !== e.show);
+  if (firstOther) pick.push(firstOther);
+  related.forEach(r => { if (pick.length < 4 && !pick.includes(r)) pick.push(r); });
+  const video = SELF_HOSTED
+    ? `<iframe src="https://www.youtube-nocookie.com/embed/${e.youtube}" title="${esc(e.title)}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`
+    : `<a class="video" href="${yt(e.youtube)}" target="_blank" rel="noopener" style="--show:${s.color}"><img class="thumb" src="${ytThumb(e.youtube)}" alt="" onerror="if(!this.dataset.hq){this.dataset.hq=1;this.src='https://i.ytimg.com/vi/${e.youtube}/hqdefault.jpg'}else{this.remove()}"><span class="pb"><svg width="34" height="34" viewBox="0 0 24 24" fill="#16191D"><path d="M8 5v14l11-7z"/></svg></span><span class="cap">Watch on YouTube · ${fmtDur(e.duration)}</span></a>`;
+  const cueHTML = c => `<div class="cue" data-text="${esc(c.x.toLowerCase())}"><a class="t" href="${yt(e.youtube, c.t)}" target="_blank" rel="noopener">${ts(c.t)}</a><span class="sp">${esc(c.s)}</span><p>${esc(c.x)}</p></div>`;
+  app.innerHTML = `
+  <section class="ep-hero" style="--show:${s.color}"><a class="back" href="#home">← All episodes</a>
+    <p class="eyebrow"><a href="#show-${s.id}" style="color:var(--show);text-decoration:none">${esc(s.name)}</a></p>
+    <h1>${esc(e.title)}</h1>
+    <div class="line"><span class="badge">${esc(e.format)}</span><span>${fmtDate(e.date)}</span><span class="dur">${fmtDur(e.duration)}</span><span>${e.topics.map(esc).join(" · ")}</span></div>
+    <p style="max-width:62ch;color:var(--muted);margin:0;font-size:17px">${esc(e.summary)}</p></section>
+  <section class="play" style="--show:${s.color}">${video}<div class="cast">${e.people.map(p => personHTML(p, s)).join("")}</div></section>
+  <div class="two" style="--show:${s.color}">
+    <section><div class="tx-head"><h2>Transcript</h2><input class="tx-search" id="tx-search" type="search" placeholder="Search this transcript"></div>
+      <div class="tx" id="tx">${e.transcript.length ? e.transcript.map(cueHTML).join("") : `<p class="tx-empty">Transcript coming soon.</p>`}</div>
+      <p class="sample">Sample transcript excerpt. Timestamps open the video at that moment.</p></section>
+    <aside class="notes"><h2>Show notes</h2>
+      <div><h3>Takeaways</h3><ul>${e.notes.takeaways.map(t => `<li>${esc(t)}</li>`).join("")}</ul></div>
+      <div><h3>Chapters</h3><div style="display:grid;gap:6px">${e.notes.chapters.map(([t, n]) => `<div class="chap"><a href="${yt(e.youtube, t)}" target="_blank" rel="noopener">${ts(t)}</a><span>${esc(n)}</span></div>`).join("")}</div></div>
+      ${e.notes.links.length ? `<div><h3>Links</h3><ul>${e.notes.links.map(([n, u]) => `<li><a href="${esc(u)}" target="_blank" rel="noopener">${esc(n)}</a></li>`).join("")}</ul></div>` : ""}
+      <div><h3>In this episode</h3><ul>${e.people.map(p => `<li>${esc(p.n)}, ${esc(p.r)}</li>`).join("")}</ul></div>
+    </aside></div>
+  <section class="more"><h2>Keep listening</h2><p class="eyebrow" style="margin:0 0 12px">More on ${e.topics.slice(0, 2).map(esc).join(" and ")}, across all shows</p><div class="ep-list">${pick.map(r => episodeRow(r.x, `<span class="match">${r.x.show !== e.show ? "Different show · " : ""}${r.shared.length ? "also covers " + r.shared.slice(0, 2).join(", ") : "related: " + r.famShared.slice(0, 2).join(", ")}</span>`)).join("")}</div></section>`;
+  const search = document.getElementById("tx-search"), tx = document.getElementById("tx");
+  search.oninput = () => {
+    const q = search.value.trim().toLowerCase();
+    tx.querySelectorAll(".cue").forEach(c => {
+      const p = c.querySelector("p"), raw = p.textContent;
+      c.hidden = q && !c.dataset.text.includes(q);
+      p.innerHTML = q && !c.hidden ? esc(raw).replace(new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "gi"), m => `<mark>${m}</mark>`) : esc(raw);
+    });
+  };
+  setNav(null);
+  window.scrollTo({ top: 0 });
+}
+
+/* ---------- router ---------- */
+function setNav(h) { document.querySelectorAll("#nav a").forEach(a => a.getAttribute("href") === h ? a.setAttribute("aria-current", "page") : a.removeAttribute("aria-current")); }
+function route() {
+  const h = (location.hash || "#home").slice(1);
+  if (h === "home" || h === "") return renderHome();
+  if (h === "find") return renderFind(false);
+  if (h === "shows") { renderHome(); document.getElementById("shows").scrollIntoView(); return; }
+  if (h.startsWith("show-")) return renderShow(h.slice(5));
+  const e = EPISODES.find(x => x.id === h);
+  if (e) return renderEpisode(e);
+  renderHome();
+}
+window.addEventListener("hashchange", route);
+route();
+</script>
+
+</body>
+</html>
