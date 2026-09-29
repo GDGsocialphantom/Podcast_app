@@ -1,7 +1,7 @@
 // Auth: session state and the login/admin UI. This is the only file the rest of the site talks to.
 // It never looks at passwords itself; it asks AUTH_PROVIDER (see auth/providers/) and stores the answer.
 //
-// Exposed to js/app.js:  session, isAdmin(), renderChrome(), renderLogin(next), renderAdminStub(what), REQUIRE_LOGIN
+// Exposed to js/app.js and js/admin.js:  session, isAdmin(), renderChrome(), renderLogin(next), REQUIRE_LOGIN
 // Expects from js/app.js at call time:  app, esc, setNav, route, showById, EPISODES, SHOWS
 
 const AUTH_PROVIDER = LocalAuthProvider; // swap for KeynectAuthProvider when Keynect is ready (see auth/README.md)
@@ -80,13 +80,5 @@ function renderLogin(next) {
     }
     err.hidden = false;
   };
-  setNav(null);
-}
-
-/* ---------- admin stubs: real editing arrives with the next workflow ---------- */
-function renderAdminStub(what) {
-  if (!isAdmin()) return renderLogin(location.hash);
-  app.innerHTML = `<section class="ep-hero"><a class="back" href="#home">← All episodes</a><p class="eyebrow">Admin</p><h1>${esc(what)}</h1>
-    <p style="max-width:56ch;color:var(--muted);margin:0">This editor is the next workflow. For now, shows and episodes are edited in data/shows.js and data/episodes.js.</p></section>`;
   setNav(null);
 }

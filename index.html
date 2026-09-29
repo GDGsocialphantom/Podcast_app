@@ -4,10 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="description" content="Every new episode from The EKO System, Court Ordered and Keystone Sessions, in one place.">
-<title>Keystone Podcast Network</title>
+<title>Keystone Listens</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
 <link rel="stylesheet" href="css/site.css">
 <link rel="stylesheet" href="auth/auth.css">
+<link rel="stylesheet" href="css/admin.css">
 
 </head>
 <body>
@@ -26,7 +27,7 @@
   <div class="acct" id="acct"></div>
 </aside>
 <div class="main">
-<div class="adminbar" id="adminbar" hidden><div class="wrap"><strong>Admin mode</strong><a href="#admin-new-episode">Add episode</a><a href="#admin-shows">Edit shows</a><span style="opacity:.8">Editing tools are stubbed until the next workflow.</span></div></div>
+<div class="adminbar" id="adminbar" hidden><div class="wrap"><strong>Admin mode</strong><a href="#admin-new-episode">Add episode</a><a href="#admin-shows">Edit shows</a><span style="opacity:.8">Editors generate code for data/. Nothing saves from the browser yet.</span></div></div>
 <main class="wrap" id="app"></main>
 <footer>
   <span>Keystone Innovation District · 800 E 18th St, Kansas City</span>
@@ -35,12 +36,13 @@
 </div>
 </div>
 
-<!-- Load order matters: data first, then the user store and provider, then auth, then the app. -->
+<!-- Load order matters: data first, then the user store and provider, then auth, then the admin editor, then the app (which routes on load). -->
 <script src="data/shows.js"></script>
 <script src="data/episodes.js"></script>
 <script src="auth/users.js"></script>
 <script src="auth/providers/local.js"></script>
 <script src="auth/auth.js"></script>
+<script src="js/admin.js"></script>
 <script src="js/app.js"></script>
 
 </body>
