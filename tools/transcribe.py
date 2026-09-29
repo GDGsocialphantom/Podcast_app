@@ -4,10 +4,10 @@ the podcast hub reads.
 
 Usage:
     export OPENAI_API_KEY=sk-...
-    python transcribe.py episode.mp3            # writes episode.transcript.json
-    python transcribe.py episode.mp4 --notes    # also drafts takeaways + chapters
+    python tools/transcribe.py episode.mp3      # writes episode.transcript.json
+    python tools/transcribe.py episode.mp4 --notes  # also drafts takeaways + chapters
 
-Paste the JSON output into the matching episode in the DATA block of podcast-hub.html
+Paste the JSON output into the matching episode in the DATA block of data/episodes.js
 (`transcript: [...]` and `notes: {...}`).
 
 Requires:  pip install openai

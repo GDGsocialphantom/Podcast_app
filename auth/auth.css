@@ -1,0 +1,18 @@
+/* Auth UI: account chip in the sidebar, login card, admin bar and edit buttons. Loaded after css/site.css. */
+.login { max-width: 420px; margin: 56px auto; padding: 28px; display: grid; gap: 16px; }
+.login h1 { font-size: 20px; }
+.login .sub { color: var(--muted); font-size: 14px; margin: 4px 0 0; }
+.login label { display: grid; gap: 6px; font-size: 13.5px; font-weight: 500; }
+.login input { border: 1px solid var(--line); background: var(--surface); color: var(--ink); font: inherit; padding: 9px 12px; border-radius: 6px; }
+.login .btn { width: 100%; }
+.login .err { color: #DC2626; font-size: 13.5px; margin: 0; }
+.login .dev { font-size: 12px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 14px; display: grid; gap: 4px; }
+.login-logo { display: flex; justify-content: center; align-items: center; gap: 10px; margin: 24px 0 -40px; font-weight: 800; font-size: 22px; letter-spacing: .04em; text-transform: uppercase; }
+.login-logo .mark { width: 34px; height: 34px; }
+.adminbar { background: var(--accent); color: var(--accent-ink); font-size: 13px; }
+.adminbar .wrap { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 18px; min-height: 40px; padding-block: 8px; }
+.adminbar strong { font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
+.adminbar a, .adminbar button { color: inherit; background: none; border: 0; text-decoration: underline; font: inherit; font-weight: 500; padding: 0; }
+.editbtn { font-size: 12px; font-weight: 600; border: 1px solid var(--line); color: var(--ink); background: var(--surface); border-radius: 6px; padding: 5px 12px; text-decoration: none; white-space: nowrap; }
+.editbtn:hover { border-color: var(--primary); }
+.ep-title-row { display: flex; gap: 12px; align-items: center; justify-content: space-between; }
