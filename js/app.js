@@ -47,8 +47,7 @@ function renderHome() {
     <div class="section-head"><h2>New episodes</h2>
       <div class="filters">${[["all", "All shows"], ...SHOWS.map(s => [s.id, s.name])].map(([id, n]) => `<button class="chip" data-filter="${id}" aria-pressed="${filter === id}">${esc(n)}</button>`).join("")}</div></div>
     <div class="ep-list">${list.map(e => episodeRow(e)).join("")}</div>
-  </section>
-  <p class="sample">Sample episodes and guests. Replace the DATA block at the top of the script with your real feed.</p>`;
+  </section>`;
   app.querySelectorAll("[data-filter]").forEach(b => b.onclick = () => { filter = b.dataset.filter; renderHome(); });
   setNav("#home");
 }
@@ -91,7 +90,7 @@ function renderFind(showResults) {
     <fieldset><legend>How much time do you have?</legend><div class="choices">${[["any", "Any length"], ["short", "Under 25 min"], ["medium", "25 to 50 min"], ["long", "Over 50 min"]].map(([v, l]) => chk("time", v, l)).join("")}</div></fieldset>
     <fieldset><legend>How do you like to listen?</legend><div class="choices">${[["any", "Doesn't matter"], ["Interview", "One-on-one interview"], ["Panel", "Group conversation"], ["Solo", "Solo host"], ["Talk", "Live talk"]].map(([v, l]) => chk("format", v, l)).join("")}</div></fieldset>
     <fieldset><legend>Any particular show?</legend><div class="choices">${[["any", "Any show"], ...SHOWS.map(s => [s.id, s.name])].map(([v, l]) => chk("show", v, l)).join("")}</div></fieldset>
-    <fieldset><legend for="free">Anything else? (optional)</legend><textarea id="free" name="free" placeholder="e.g. I'm thinking about buying a franchise and want to hear from someone who did it">${esc(prefs.free)}</textarea></fieldset>
+    <fieldset><legend>Anything else? (optional)</legend><textarea id="free" name="free" placeholder="e.g. I'm thinking about buying a franchise and want to hear from someone who did it">${esc(prefs.free)}</textarea></fieldset>
     <div><button class="btn" type="submit">Show me episodes</button></div>
   </form>
   ${results}`;
@@ -137,6 +136,7 @@ function renderEpisode(e) {
   const video = SELF_HOSTED
     ? `<iframe src="https://www.youtube-nocookie.com/embed/${e.youtube}" title="${esc(e.title)}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`
     : `<a class="video" href="${yt(e.youtube)}" target="_blank" rel="noopener" style="--show:${s.color}"><img class="thumb" src="${ytThumb(e.youtube)}" alt="" onerror="if(!this.dataset.hq){this.dataset.hq=1;this.src='https://i.ytimg.com/vi/${e.youtube}/hqdefault.jpg'}else{this.remove()}"><span class="pb"><svg width="32" height="32" viewBox="0 0 24 24" fill="#0F2F33"><path d="M8 5v14l11-7z"/></svg></span><span class="cap">Watch on YouTube · ${fmtDur(e.duration)}</span></a>`;
+  const n = e.notes || {}, has = a => Array.isArray(a) && a.length > 0; // notes and each section are optional (see tools/check-data.js)
   const cueHTML = c => `<div class="cue" data-text="${esc(c.x.toLowerCase())}"><a class="t" href="${yt(e.youtube, c.t)}" target="_blank" rel="noopener">${ts(c.t)}</a><span class="sp">${esc(c.s)}</span><p>${esc(c.x)}</p></div>`;
   app.innerHTML = `
   <section class="ep-hero" style="--show:${s.color}"><a class="back" href="#home">← All episodes</a>
@@ -147,12 +147,11 @@ function renderEpisode(e) {
   <section class="play card" style="--show:${s.color}">${video}<div class="cast">${e.people.map(p => personHTML(p, s)).join("")}</div></section>
   <div class="two" style="--show:${s.color}">
     <section class="card"><div class="tx-head"><h2>Transcript</h2><input class="tx-search" id="tx-search" type="search" placeholder="Search this transcript"></div>
-      <div class="tx" id="tx">${e.transcript.length ? e.transcript.map(cueHTML).join("") : `<p class="tx-empty">Transcript coming soon.</p>`}</div>
-      <p class="sample">Sample transcript excerpt. Timestamps open the video at that moment.</p></section>
+      <div class="tx" id="tx">${e.transcript.length ? e.transcript.map(cueHTML).join("") : `<p class="tx-empty">Transcript coming soon.</p>`}</div></section>
     <aside class="notes card"><h2>Show notes</h2>
-      <div><h3>Takeaways</h3><ul>${e.notes.takeaways.map(t => `<li>${esc(t)}</li>`).join("")}</ul></div>
-      <div><h3>Chapters</h3><div style="display:grid;gap:6px">${e.notes.chapters.map(([t, n]) => `<div class="chap"><a href="${yt(e.youtube, t)}" target="_blank" rel="noopener">${ts(t)}</a><span>${esc(n)}</span></div>`).join("")}</div></div>
-      ${e.notes.links.length ? `<div><h3>Links</h3><ul>${e.notes.links.map(([n, u]) => `<li><a href="${esc(u)}" target="_blank" rel="noopener">${esc(n)}</a></li>`).join("")}</ul></div>` : ""}
+      ${has(n.takeaways) ? `<div><h3>Takeaways</h3><ul>${n.takeaways.map(t => `<li>${esc(t)}</li>`).join("")}</ul></div>` : ""}
+      ${has(n.chapters) ? `<div><h3>Chapters</h3><div style="display:grid;gap:6px">${n.chapters.map(([t, x]) => `<div class="chap"><a href="${yt(e.youtube, t)}" target="_blank" rel="noopener">${ts(t)}</a><span>${esc(x)}</span></div>`).join("")}</div></div>` : ""}
+      ${has(n.links) ? `<div><h3>Links</h3><ul>${n.links.map(([x, u]) => `<li><a href="${esc(u)}" target="_blank" rel="noopener">${esc(x)}</a></li>`).join("")}</ul></div>` : ""}
       <div><h3>In this episode</h3><ul>${e.people.map(p => `<li>${esc(p.n)}, ${esc(p.r)}</li>`).join("")}</ul></div>
     </aside></div>
   <section class="more"><h2>Keep listening</h2><p class="eyebrow" style="margin:0 0 12px">More on ${e.topics.slice(0, 2).map(esc).join(" and ")}, across all shows</p><div class="ep-list">${pick.map(r => episodeRow(r.x, `<span class="match">${r.x.show !== e.show ? "Different show · " : ""}${r.shared.length ? "also covers " + r.shared.slice(0, 2).join(", ") : "related: " + r.famShared.slice(0, 2).join(", ")}</span>`)).join("")}</div></section>`;
@@ -177,8 +176,8 @@ function route() {
   if (REQUIRE_LOGIN && !session) return renderLogin(location.hash);
   if (h === "admin-new-episode") return renderAdminStub("Add episode");
   if (h === "admin-shows") return renderAdminStub("Edit shows");
-  if (h.startsWith("admin-edit-show-")) return renderAdminStub("Edit show: " + (showById(h.slice(16)) || {}).name);
-  if (h.startsWith("admin-edit-")) return renderAdminStub("Edit episode: " + (EPISODES.find(x => x.id === h.slice(11)) || {}).title);
+  if (h.startsWith("admin-edit-show-")) { const s = showById(h.slice(16)); return s ? renderAdminStub("Edit show: " + s.name) : renderHome(); }
+  if (h.startsWith("admin-edit-")) { const e = EPISODES.find(x => x.id === h.slice(11)); return e ? renderAdminStub("Edit episode: " + e.title) : renderHome(); }
   if (h === "home" || h === "") return renderHome();
   if (h === "find") return renderFind(false);
   if (h === "shows") { renderHome(); document.getElementById("shows").scrollIntoView(); return; }

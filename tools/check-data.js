@@ -42,8 +42,9 @@ for (const e of EPISODES || []) {
   if (!e.id) bad("episodes", "an episode has no id");
   if (epIds.has(e.id)) bad(id, "duplicate episode id");
   epIds.add(e.id);
-  if (e.id && /^(home|find|shows)$/.test(e.id)) bad(id, "id collides with a route name");
+  if (e.id && /^(home|find|shows|login)$/.test(e.id)) bad(id, "id collides with a route name");
   if (e.id && e.id.startsWith("show-")) bad(id, "ids starting with show- collide with show pages");
+  if (e.id && e.id.startsWith("admin-")) bad(id, "ids starting with admin- collide with admin pages");
   if (!showIds.has(e.show)) bad(id, `show "${e.show}" does not exist in shows.js`);
   for (const k of ["title", "summary", "format", "date"]) if (!e[k]) bad(id, `missing ${k}`);
   if (e.date && !/^\d{4}-\d{2}-\d{2}$/.test(e.date)) bad(id, `date "${e.date}" should be YYYY-MM-DD`);
