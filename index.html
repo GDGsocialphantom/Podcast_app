@@ -152,6 +152,26 @@ aside.notes { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 76px);
 .more { border-top: 1px solid var(--line); padding-top: 24px; margin-bottom: 56px; }
 .more h2 { font-size: 26px; margin-bottom: 12px; }
 
+/* auth */
+.acct { display: flex; align-items: center; gap: 10px; font-size: 14px; }
+.acct .role { font-family: var(--mono); font-size: 11px; letter-spacing: .06em; text-transform: uppercase; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); }
+.acct .role.admin { border-color: var(--accent); color: var(--accent); }
+.acct .name { font-weight: 500; }
+.acct button, .acct a { background: none; border: 0; color: var(--muted); text-decoration: none; font-size: 14px; padding: 4px 8px; }
+.acct button:hover, .acct a:hover { color: var(--ink); }
+.login { max-width: 440px; margin: 56px auto; background: var(--surface); border: 1px solid var(--line); padding: 32px; display: grid; gap: 18px; }
+.login h1 { font-size: 40px; }
+.login label { display: grid; gap: 6px; font-size: 14px; font-weight: 500; }
+.login input { border: 1px solid var(--line); background: var(--bg); color: var(--ink); font: inherit; padding: 10px 12px; border-radius: 6px; }
+.login .err { color: var(--accent); font-size: 14px; margin: 0; }
+.login .dev { font-family: var(--mono); font-size: 12px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 14px; display: grid; gap: 4px; }
+.adminbar { background: var(--accent); color: var(--accent-ink); font-size: 14px; }
+.adminbar .wrap { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 18px; min-height: 40px; padding-block: 6px; }
+.adminbar strong { font-family: var(--mono); font-size: 12px; letter-spacing: .06em; text-transform: uppercase; }
+.adminbar a, .adminbar button { color: inherit; background: none; border: 0; text-decoration: underline; font: inherit; padding: 0; }
+.editbtn { font-family: var(--mono); font-size: 12px; border: 1px solid var(--accent); color: var(--accent); background: none; border-radius: 999px; padding: 4px 12px; text-decoration: none; }
+.editbtn:hover { background: var(--accent); color: var(--accent-ink); }
+.ep-title-row { display: flex; gap: 12px; align-items: center; justify-content: space-between; }
 .sample { font-family: var(--mono); font-size: 12px; color: var(--muted); border: 1px dashed var(--line); padding: 8px 12px; margin-block: 8px 0; }
 footer { border-top: 1px solid var(--line); padding-block: 24px 40px; color: var(--muted); font-size: 13px; display: flex; flex-wrap: wrap; gap: 16px; justify-content: space-between; }
 .back { text-decoration: none; color: var(--muted); font-size: 14px; }
@@ -181,7 +201,9 @@ footer { border-top: 1px solid var(--line); padding-block: 24px 40px; color: var
     <a href="#find">Find something to listen to</a>
     <a href="#shows">Shows</a>
   </nav>
+  <div class="acct" id="acct"></div>
 </div></div>
+<div class="adminbar" id="adminbar" hidden><div class="wrap"><strong>Admin mode</strong><a href="#admin-new-episode">Add episode</a><a href="#admin-shows">Edit shows</a><span style="opacity:.8">Editing tools are stubbed until the next workflow.</span></div></div>
 
 <main class="wrap" id="app"></main>
 
@@ -196,7 +218,16 @@ footer { border-top: 1px solid var(--line); padding-block: 24px 40px; color: var
    Every episode below is SAMPLE content so the layout has something to show.
    Transcripts: run transcribe.py on the audio and paste the output into `transcript`.
    ============================================================ */
-const SELF_HOSTED = true; // set true when this file is on your own domain: the episode page then embeds the YouTube player directly
+const SELF_HOSTED = true;
+
+/* ---- AUTH (development only) ----
+   Accounts are checked in the browser, so this is a placeholder, not real security.
+   Swap `login()` for the Keynect auth call when that's ready; the rest of the page only reads `session.role`. */
+const REQUIRE_LOGIN = false;   // true = visitors must log in to see anything
+const DEV_ACCOUNTS = [
+  { email: "admin@keystone.test", password: "admin123", name: "Keystone Admin", role: "admin" },
+  { email: "listener@keystone.test", password: "listen123", name: "Sample Listener", role: "user" }
+]; // set true when this file is on your own domain: the episode page then embeds the YouTube player directly
 
 const SHOWS = [
   { id: "eko", name: "The EKO System", color: "var(--eko)", org: "Black Excellence Inc.",
@@ -368,6 +399,58 @@ const EPISODES = [
 
 /* ============================================================ */
 const app = document.getElementById("app");
+
+/* ---------- session ---------- */
+const SKEY = "kl.session";
+let session = null;
+try { session = JSON.parse(localStorage.getItem(SKEY) || "null"); } catch (e) { session = null; }
+const isAdmin = () => !!session && session.role === "admin";
+function login(email, password) {
+  // Replace this lookup with the Keynect auth request later. Return the same shape: { name, email, role }.
+  const a = DEV_ACCOUNTS.find(x => x.email.toLowerCase() === email.trim().toLowerCase() && x.password === password);
+  if (!a) return null;
+  session = { name: a.name, email: a.email, role: a.role };
+  try { localStorage.setItem(SKEY, JSON.stringify(session)); } catch (e) {}
+  return session;
+}
+function logout() { session = null; try { localStorage.removeItem(SKEY); } catch (e) {} location.hash = "#home"; renderChrome(); route(); }
+function renderChrome() {
+  const acct = document.getElementById("acct"), bar = document.getElementById("adminbar");
+  if (session) {
+    acct.innerHTML = `<span class="name">${esc(session.name)}</span><span class="role ${session.role}">${esc(session.role)}</span><button type="button" id="logout">Log out</button>`;
+    document.getElementById("logout").onclick = logout;
+  } else {
+    acct.innerHTML = `<a href="#login">Log in</a>`;
+  }
+  bar.hidden = !isAdmin();
+}
+
+function renderLogin(next) {
+  app.innerHTML = `<form class="login" id="login-form">
+    <div><p class="eyebrow">Keystone Listens</p><h1>Log in</h1></div>
+    <label>Email<input type="email" id="login-email" name="email" autocomplete="username" required></label>
+    <label>Password<input type="password" id="login-password" name="password" autocomplete="current-password" required></label>
+    <p class="err" id="login-err" hidden>That email and password don't match. Try again.</p>
+    <div><button class="btn" type="submit">Log in</button></div>
+    <div class="dev"><span>Development accounts (replace with Keynect auth later):</span>${DEV_ACCOUNTS.map(a => `<span>${esc(a.role)} · ${esc(a.email)} / ${esc(a.password)}</span>`).join("")}</div>
+  </form>`;
+  const f = document.getElementById("login-form");
+  f.onsubmit = ev => {
+    ev.preventDefault();
+    const ok = login(f.email.value, f.password.value);
+    document.getElementById("login-err").hidden = !!ok;
+    if (ok) { renderChrome(); location.hash = next && next !== "#login" ? next : "#home"; if (location.hash === (next || "#home")) route(); }
+  };
+  setNav(null);
+}
+
+/* admin stubs: real editing arrives with the next workflow */
+function renderAdminStub(what) {
+  if (!isAdmin()) return renderLogin(location.hash);
+  app.innerHTML = `<section class="ep-hero"><a class="back" href="#home">← All episodes</a><p class="eyebrow">Admin</p><h1>${esc(what)}</h1>
+    <p style="max-width:56ch;color:var(--muted);margin:0">This editor is the next workflow. For now, shows and episodes are edited in the DATA block of index.html.</p></section>`;
+  setNav(null);
+}
 const showById = id => SHOWS.find(s => s.id === id);
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const fmtDate = d => new Date(d + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
@@ -475,7 +558,7 @@ function renderShow(id) {
   const list = sorted().filter(e => e.show === id);
   app.innerHTML = `
   <section class="ep-hero" style="--show:${s.color}"><a class="back" href="#home">← All episodes</a>
-    <p class="eyebrow" style="color:var(--show)">${esc(s.org)}</p><h1>${esc(s.name)}</h1>
+    <p class="eyebrow" style="color:var(--show)">${esc(s.org)}</p><div class="ep-title-row"><h1>${esc(s.name)}</h1>${isAdmin() ? `<a class="editbtn" href="#admin-edit-show-${s.id}">Edit show</a>` : ""}</div>
     <p style="max-width:56ch;color:var(--muted);margin:0">${esc(s.about)}</p>
     <div class="line"><span>Hosted by ${esc(s.hosts.join(", "))}</span><span>${list.length} episodes</span></div></section>
   <div class="ep-list">${list.map(e => episodeRow(e)).join("")}</div>`;
@@ -504,7 +587,7 @@ function renderEpisode(e) {
   app.innerHTML = `
   <section class="ep-hero" style="--show:${s.color}"><a class="back" href="#home">← All episodes</a>
     <p class="eyebrow"><a href="#show-${s.id}" style="color:var(--show);text-decoration:none">${esc(s.name)}</a></p>
-    <h1>${esc(e.title)}</h1>
+    <div class="ep-title-row"><h1>${esc(e.title)}</h1>${isAdmin() ? `<a class="editbtn" href="#admin-edit-${e.id}">Edit episode</a>` : ""}</div>
     <div class="line"><span class="badge">${esc(e.format)}</span><span>${fmtDate(e.date)}</span><span class="dur">${fmtDur(e.duration)}</span><span>${e.topics.map(esc).join(" · ")}</span></div>
     <p style="max-width:62ch;color:var(--muted);margin:0;font-size:17px">${esc(e.summary)}</p></section>
   <section class="play" style="--show:${s.color}">${video}<div class="cast">${e.people.map(p => personHTML(p, s)).join("")}</div></section>
@@ -536,6 +619,12 @@ function renderEpisode(e) {
 function setNav(h) { document.querySelectorAll("#nav a").forEach(a => a.getAttribute("href") === h ? a.setAttribute("aria-current", "page") : a.removeAttribute("aria-current")); }
 function route() {
   const h = (location.hash || "#home").slice(1);
+  if (h === "login") return renderLogin("#home");
+  if (REQUIRE_LOGIN && !session) return renderLogin(location.hash);
+  if (h === "admin-new-episode") return renderAdminStub("Add episode");
+  if (h === "admin-shows") return renderAdminStub("Edit shows");
+  if (h.startsWith("admin-edit-show-")) return renderAdminStub("Edit show: " + (showById(h.slice(16)) || {}).name);
+  if (h.startsWith("admin-edit-")) return renderAdminStub("Edit episode: " + (EPISODES.find(x => x.id === h.slice(11)) || {}).title);
   if (h === "home" || h === "") return renderHome();
   if (h === "find") return renderFind(false);
   if (h === "shows") { renderHome(); document.getElementById("shows").scrollIntoView(); return; }
@@ -545,6 +634,7 @@ function route() {
   renderHome();
 }
 window.addEventListener("hashchange", route);
+renderChrome();
 route();
 </script>
 
