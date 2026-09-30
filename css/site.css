@@ -20,16 +20,8 @@
   --shadow: 0 1px 2px rgba(0,0,0,.04), 0 1px 3px rgba(0,0,0,.06);
   --font: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 }
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --bg: #1A1A1A; --surface: #232323; --ink: #F5F5F5; --muted: #A3A3A3; --line: #363636;
-    --side: #111111; --side-line: #2A2A2A; --shadow: none; color-scheme: dark;
-  }
-}
-:root[data-theme="dark"] {
-  --bg: #1A1A1A; --surface: #232323; --ink: #F5F5F5; --muted: #A3A3A3; --line: #363636;
-  --side: #111111; --side-line: #2A2A2A; --shadow: none; color-scheme: dark;
-}
+/* Light only, matching Keynect. No automatic dark mode: the page stays light whatever the system theme. */
+:root { color-scheme: light; }
 * { box-sizing: border-box; }
 html { scroll-padding-top: 20px; }
 body { background: var(--bg); color: var(--ink); font-family: var(--font); font-size: 15px; line-height: 1.55; margin: 0; -webkit-font-smoothing: antialiased; }
