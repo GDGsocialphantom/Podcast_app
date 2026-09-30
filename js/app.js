@@ -133,7 +133,7 @@ function renderEpisode(e) {
   const pick = [], firstOther = related.find(r => r.x.show !== e.show);
   if (firstOther) pick.push(firstOther);
   related.forEach(r => { if (pick.length < 4 && !pick.includes(r)) pick.push(r); });
-  const video = SELF_HOSTED
+  const video = SELF_HOSTED && location.protocol !== "file:" // YouTube refuses embeds on file:// pages, so opened from disk the page falls back to the thumbnail link
     ? `<iframe src="https://www.youtube-nocookie.com/embed/${e.youtube}" title="${esc(e.title)}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`
     : `<a class="video" href="${yt(e.youtube)}" target="_blank" rel="noopener" style="--show:${s.color}"><img class="thumb" src="${ytThumb(e.youtube)}" alt="" onerror="if(!this.dataset.hq){this.dataset.hq=1;this.src='https://i.ytimg.com/vi/${e.youtube}/hqdefault.jpg'}else{this.remove()}"><span class="pb"><svg width="32" height="32" viewBox="0 0 24 24" fill="#0F2F33"><path d="M8 5v14l11-7z"/></svg></span><span class="cap">Watch on YouTube · ${fmtDur(e.duration)}</span></a>`;
   const n = e.notes || {}, has = a => Array.isArray(a) && a.length > 0; // notes and each section are optional (see tools/check-data.js)
