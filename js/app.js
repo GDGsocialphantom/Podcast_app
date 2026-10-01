@@ -46,18 +46,17 @@ function renderHome() {
   <section>
     <div class="section-head"><h2>New episodes</h2>
       <div class="filters">${[["all", "All shows"], ...SHOWS.map(s => [s.id, s.name])].map(([id, n]) => `<button class="chip" data-filter="${id}" aria-pressed="${filter === id}">${esc(n)}</button>`).join("")}</div></div>
-    <div class="ep-list">${list.map(e => episodeRow(e)).join("")}</div>
+    <div class="ep-list">${list.length ? list.map(e => episodeRow(e)).join("") : `<p class="tx-empty">No episodes yet for ${esc((showById(filter) || { name: "this show" }).name)}. First one is coming soon.</p>`}</div>
   </section>`;
   app.querySelectorAll("[data-filter]").forEach(b => b.onclick = () => { filter = b.dataset.filter; renderHome(); });
   setNav("#home");
 }
 
 /* ---------- find (form + results) ---------- */
-const TOPICS = ["Entrepreneurship", "Investing", "Taxes", "Real estate", "Leadership", "Hiring", "AI", "Startups", "Community", "Social impact", "Climate", "Healthcare", "Government", "Education", "Treatment courts", "Kansas City"];
+const TOPICS = ["Entrepreneurship", "Investing", "Real estate", "Leadership", "Hiring", "AI", "Startups", "Community", "Social impact", "Climate", "Healthcare", "Government", "Education", "Treatment courts", "Kansas City"];
 const TOPIC_MAP = {
   "Entrepreneurship": ["Side business", "Franchising", "Startups", "Product", "Leaving corporate", "Wealth building", "Entrepreneurship", "Founder stories", "Founder mindset", "Founder advice", "Founder lessons", "Small business", "Immigrant founders", "Women founders", "Black entrepreneurship", "Scaling", "Building in public", "Resilience"],
   "Investing": ["Investing", "Index funds", "Real estate", "Wealth building", "Financing", "Venture capital", "Raising capital", "Startup funding", "Impact investing", "Capital", "Angel investing"],
-  "Taxes": ["Taxes", "Entity setup", "Cash flow"],
   "Real estate": ["Real estate", "Affordable housing", "Urban development", "Community development", "Gentrification", "Sustainable building"],
   "Leadership": ["Leadership", "Company culture", "Communication", "Creative leadership", "Corporate innovation", "Corporate responsibility", "Mentorship", "Decision making", "Women in leadership", "Civic leadership"],
   "Hiring": ["Hiring", "Company culture", "Workforce", "Talent", "Gen Z", "Diversity and inclusion"],
@@ -131,7 +130,7 @@ function renderShow(id) {
     <p class="eyebrow showtag"><span class="dot"></span>${esc(s.org)}</p><div class="ep-title-row"><h1>${esc(s.name)}</h1>${isAdmin() ? `<a class="editbtn" href="#admin-edit-show-${s.id}">Edit show</a>` : ""}</div>
     <p style="max-width:56ch;color:var(--muted);margin:0">${esc(s.about)}</p>
     <div class="line"><span>Hosted by ${esc(s.hosts.join(", "))}</span><span>${list.length} episodes</span></div></section>
-  <div class="ep-list">${list.map(e => episodeRow(e)).join("")}</div>`;
+  <div class="ep-list">${list.length ? list.map(e => episodeRow(e)).join("") : `<p class="tx-empty">No episodes yet. The first one is coming soon.</p>`}</div>`;
   setNav("#show-" + id);
 }
 
