@@ -1,6 +1,6 @@
 # Keystone Listens
 
-Podcast hub for The EKO System, Court Ordered and Keystone Sessions. A static site, no build step.
+Podcast hub for The Disruption Lab, The EKO System, Court Ordered and Keystone Sessions. A static site, no build step.
 
 ```
 index.html            page shell (header, main, footer) and the script/style tags
@@ -8,7 +8,7 @@ css/site.css          site styles
 css/admin.css         admin editor styles
 js/app.js             rendering, routing and the "find something to listen to" matcher
 js/admin.js           admin editor: episode and show forms that generate code for data/ (nothing saves from the browser)
-data/shows.js         the three shows
+data/shows.js         the four shows
 data/episodes.js      every episode, with transcript and show notes
 auth/                 login, sessions, admin role and the user store (see auth/README.md)
 tools/transcribe.py   turns an episode's audio into transcript JSON

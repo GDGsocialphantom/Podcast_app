@@ -1,6 +1,10 @@
 // Shows. Each episode in data/episodes.js references a show by its id.
 // Colors are CSS variables defined in css/site.css.
 const SHOWS = [
+  { id: "disruption", name: "The Disruption Lab", color: "var(--disruption)", org: "Keystone Innovation District",
+    tagline: "Disruption isn't a trend, it's a mindset.",
+    hosts: ["Kevin McGinnis"],
+    about: "Founders, thinkers and change-makers on how they're shaking up industries, improving communities and building what's next. Unscripted, unfiltered, and often recorded live at Keystone Sessions." },
   { id: "eko", name: "The EKO System", color: "var(--eko)", org: "Black Excellence Inc.",
     tagline: "Build the system that builds you. No fluff. Just game.",
     hosts: ["Craig Moore II", "Craig Smith", "Erica Taylor-Murff"],

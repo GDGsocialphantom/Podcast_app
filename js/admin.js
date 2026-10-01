@@ -237,7 +237,7 @@ function renderEpisodeEditor(id) {
 }
 
 /* ---------- show editor ---------- */
-const COLOR_OPTIONS = [["var(--eko)", "Lime (EKO)"], ["var(--court)", "Blue (Court Ordered)"], ["var(--sessions)", "Amber (Sessions)"]];
+const COLOR_OPTIONS = [["var(--eko)", "Lime (EKO)"], ["var(--court)", "Blue (Court Ordered)"], ["var(--sessions)", "Amber (Sessions)"], ["var(--disruption)", "Violet (Disruption Lab)"]];
 function renderShowEditor(id) {
   const existing = id ? showById(id) : null;
   if (id && !existing) return renderHome();

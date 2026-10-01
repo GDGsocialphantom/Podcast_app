@@ -35,7 +35,7 @@ function renderHome() {
   const count = id => EPISODES.filter(e => e.show === id).length;
   app.innerHTML = `
   <section class="mast">
-    <div class="hero card"><p class="eyebrow">Kansas City · three shows · new episodes weekly</p>
+    <div class="hero card"><p class="eyebrow">Kansas City · four shows · new episodes weekly</p>
       <h1>Every new episode, in one place.</h1>
       <p>Browse what just dropped, or tell us what you're in the mood for and we'll pick for you.</p>
       <div class="cta"><a class="btn" href="#find">Find me an episode</a><a class="btn ghost" href="#shows">Browse shows</a></div></div>
@@ -53,8 +53,25 @@ function renderHome() {
 }
 
 /* ---------- find (form + results) ---------- */
-const TOPICS = ["Entrepreneurship", "Investing", "Taxes", "Real estate", "Franchising", "Leadership", "Hiring", "AI", "Startups", "Construction tech", "Treatment courts", "Court data", "Kansas City"];
-const TOPIC_MAP = { "Entrepreneurship": ["Side business", "Franchising", "Startups", "Product", "Leaving corporate", "Wealth building"], "Investing": ["Investing", "Index funds", "Real estate", "Wealth building", "Financing"], "Taxes": ["Taxes", "Entity setup", "Cash flow"], "Real estate": ["Real estate"], "Franchising": ["Franchising", "Financing"], "Leadership": ["Leadership", "Company culture"], "Hiring": ["Hiring", "Company culture"], "AI": ["AI", "AI in courts", "Technology", "Court data"], "Startups": ["Startups", "Product", "CoFoundry", "Side business"], "Construction tech": ["Construction tech", "Virtual design", "Architecture"], "Treatment courts": ["Treatment courts", "Recidivism", "Court funding", "Participants", "Families", "Court process"], "Court data": ["Court data", "Public data", "Court funding", "AI in courts"], "Kansas City": ["Kansas City", "Johnson County", "CoFoundry"] };
+const TOPICS = ["Entrepreneurship", "Investing", "Taxes", "Real estate", "Leadership", "Hiring", "AI", "Startups", "Community", "Social impact", "Climate", "Healthcare", "Government", "Education", "Treatment courts", "Kansas City"];
+const TOPIC_MAP = {
+  "Entrepreneurship": ["Side business", "Franchising", "Startups", "Product", "Leaving corporate", "Wealth building", "Entrepreneurship", "Founder stories", "Founder mindset", "Founder advice", "Founder lessons", "Small business", "Immigrant founders", "Women founders", "Black entrepreneurship", "Scaling", "Building in public", "Resilience"],
+  "Investing": ["Investing", "Index funds", "Real estate", "Wealth building", "Financing", "Venture capital", "Raising capital", "Startup funding", "Impact investing", "Capital", "Angel investing"],
+  "Taxes": ["Taxes", "Entity setup", "Cash flow"],
+  "Real estate": ["Real estate", "Affordable housing", "Urban development", "Community development", "Gentrification", "Sustainable building"],
+  "Leadership": ["Leadership", "Company culture", "Communication", "Creative leadership", "Corporate innovation", "Corporate responsibility", "Mentorship", "Decision making", "Women in leadership", "Civic leadership"],
+  "Hiring": ["Hiring", "Company culture", "Workforce", "Talent", "Gen Z", "Diversity and inclusion"],
+  "AI": ["AI", "AI in courts", "Technology", "Court data", "AI infrastructure", "Data centers", "Robotics", "Future of work", "Emerging tech", "Data analytics"],
+  "Startups": ["Startups", "Product", "CoFoundry", "Side business", "Startup ecosystem", "Ecosystem building", "Innovation economy", "Accelerators", "Startup programs", "Social Venture Studio", "Founder stories"],
+  "Community": ["Community", "Community development", "Black community", "Food access", "Social Venture Studio", "Creative economy", "Music", "Arts", "Collaboration", "Nonprofits"],
+  "Social impact": ["Social impact", "Social entrepreneurship", "Social enterprise", "Social Venture Studio", "Affordable housing", "Homelessness", "Food access", "Mental health access", "Disability", "Accessibility", "Justice reform", "Impact investing"],
+  "Climate": ["Climate", "Climate tech", "Refrigerants", "Nuclear energy", "Energy", "Sustainable fashion", "Circular economy", "Sustainability", "Sustainable infrastructure", "Sustainable building", "Electric vehicles"],
+  "Healthcare": ["Healthcare", "Medical devices", "Clinical trials", "Medical records", "Digital health", "Animal health", "Autism", "Aging in place", "Health innovation", "Biotech", "Pediatric innovation"],
+  "Government": ["Government", "Civic tech", "Civic innovation", "Smart cities", "GovTech", "Democracy", "Policy", "Entrepreneurship policy", "National security", "Missouri"],
+  "Education": ["Education", "Tech education", "STEM education", "Youth", "Workforce", "Music", "Design thinking", "Research commercialization"],
+  "Treatment courts": ["Treatment courts", "Recidivism", "Court funding", "Participants", "Families", "Court process", "Justice reform", "Court data", "Crime prevention", "Mass incarceration"],
+  "Kansas City": ["Kansas City", "Johnson County", "CoFoundry", "Logistics", "Economic development", "Sports", "Midwest"]
+};
 let prefs = { topics: [], time: "any", format: "any", show: "any", free: "" };
 
 function score(e) {
