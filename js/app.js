@@ -163,7 +163,7 @@ function renderEpisode(e) {
   <section class="play card" style="--show:${s.color}">${video}<div class="cast">${e.people.map(p => personHTML(p, s)).join("")}</div></section>
   <div class="two" style="--show:${s.color}">
     <section class="card"><div class="tx-head"><h2>Transcript</h2><input class="tx-search" id="tx-search" type="search" placeholder="Search this transcript"></div>
-      <div class="tx" id="tx">${e.transcript.length ? e.transcript.map(cueHTML).join("") : `<p class="tx-empty">Transcript coming soon.</p>`}</div></section>
+      <div class="tx" id="tx"><p class="tx-empty">Transcript coming soon.</p></div></section>
     <aside class="notes card"><h2>Show notes</h2>
       ${has(n.takeaways) ? `<div><h3>Takeaways</h3><ul>${n.takeaways.map(t => `<li>${esc(t)}</li>`).join("")}</ul></div>` : ""}
       ${has(n.chapters) ? `<div><h3>Chapters</h3><div style="display:grid;gap:6px">${n.chapters.map(([t, x]) => `<div class="chap"><a href="${yt(e.youtube, t)}" target="_blank" rel="noopener">${ts(t)}</a><span>${esc(x)}</span></div>`).join("")}</div></div>` : ""}
@@ -180,6 +180,13 @@ function renderEpisode(e) {
       p.innerHTML = q && !c.hidden ? esc(raw).replace(new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "gi"), m => `<mark>${m}</mark>`) : esc(raw);
     });
   };
+  // Transcripts live in data/transcripts/<id>.json and load after the page renders. No file, a 404 or a blocked fetch (file://) leaves the placeholder.
+  const txUrl = `data/transcripts/${encodeURIComponent(e.id)}.json`;
+  if (location.protocol !== "file:") fetch(txUrl).then(r => r.ok ? r.json() : null).then(cues => {
+    if (!Array.isArray(cues) || !cues.length || location.hash.slice(1) !== e.id) return; // user already navigated away
+    tx.innerHTML = cues.map(cueHTML).join("");
+    if (search.value) search.oninput();
+  }).catch(err => console.warn("transcript: could not load " + txUrl, err));
   setNav(null);
   window.scrollTo({ top: 0 });
 }
