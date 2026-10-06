@@ -1,0 +1,49 @@
+name: Fetch captions
+
+# Manual run: Actions > Fetch captions > Run workflow. Leave "episode" blank to pull every episode
+# that has no transcript file yet. Writes data/transcripts/<id>.json and commits to the branch you ran it on.
+on:
+  workflow_dispatch:
+    inputs:
+      episode:
+        description: "Episode id (blank = all episodes without a transcript)"
+        required: false
+        default: ""
+      force:
+        description: "Overwrite transcript files that already exist"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+jobs:
+  captions:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -U yt-dlp
+      - name: Fetch captions
+        run: |
+          ARGS="${{ github.event.inputs.episode }}"
+          if [ -z "$ARGS" ]; then ARGS="--all"; fi
+          if [ "${{ github.event.inputs.force }}" = "true" ]; then ARGS="$ARGS --force"; fi
+          node tools/fetch-captions.js $ARGS | tee fetch.log
+      - run: node tools/check-data.js
+      - name: Commit transcripts
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/transcripts
+          if git diff --cached --quiet; then echo "No transcript changes."; exit 0; fi
+          SUMMARY=$(grep -m1 '^Done:' fetch.log || echo "Fetch captions")
+          git commit -m "Add YouTube caption transcripts" -m "$SUMMARY"
+          git push origin HEAD:${{ github.ref_name }}
