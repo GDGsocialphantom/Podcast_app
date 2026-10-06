@@ -43,7 +43,7 @@ function renderChrome() {
     acct.innerHTML = `<a href="#login">Log in</a>`;
   }
   bar.hidden = !isAdmin();
-  document.getElementById("shownav").innerHTML = SHOWS.map(s => `<a href="#show-${s.id}" style="--show:${s.color}"><span class="dot"></span><span class="txt">${esc(s.name)}</span></a>`).join("");
+  document.getElementById("shownav").innerHTML = SHOWS.map(s => `<a href="#show-${s.id}" style="${showVars(s)}">${showLogo(s, "xs")}<span class="txt">${esc(s.name)}</span></a>`).join("");
 }
 
 /* ---------- login page ---------- */

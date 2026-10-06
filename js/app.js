@@ -14,15 +14,21 @@ const yt = (id, t) => `https://www.youtube.com/watch?v=${id}${t ? "&t=" + t + "s
 const ytThumb = id => `https://i.ytimg.com/vi/${id}/maxresdefault.jpg`; // YouTube's og:image; hqdefault.jpg is the fallback if the video has no HD thumbnail
 const sorted = () => [...EPISODES].sort((a, b) => b.date.localeCompare(a.date));
 
+// Show logo tile: the real logo when assets/shows/<id>.png exists, otherwise a monogram in the brand color.
+const showVars = s => `--show:${s.color};--show-ink:${s.ink || "#fff"}`;
+function showLogo(s, cls = "") {
+  return `<span class="slogo ${cls}" style="${showVars(s)}"><img src="${esc(s.logo || "")}" alt="" onerror="this.parentNode.classList.add('nologo');this.remove()"><b>${esc(initials(s.name.replace(/^The\s+/, "")))}</b></span>`;
+}
 function personHTML(p, show) {
-  return `<div class="p"><span class="avatar" style="--show:${show.color}">${esc(initials(p.n))}</span><span>${esc(p.n)}<small>${esc(p.r)}</small></span></div>`;
+  return `<div class="p"><span class="avatar" style="${showVars(show)}">${esc(initials(p.n))}</span><span>${esc(p.n)}<small>${esc(p.r)}</small></span></div>`;
 }
 function episodeRow(e, extra = "") {
   const s = showById(e.show);
-  return `<a class="ep" href="#${e.id}" style="--show:${s.color}">
+  return `<a class="ep" href="#${e.id}" style="${showVars(s)}">
     <span class="stripe"></span>
-    <div class="ep-meta"><span class="showname">${esc(s.name)}</span><span>${esc(e.format)} · ${fmtDate(e.date)}</span><span class="dur">${fmtDur(e.duration)}</span>${extra}</div>
-    <div class="ep-main"><h3 class="ep-title">${esc(e.title)}</h3><p class="ep-sum">${esc(e.summary)}</p>
+    <span class="ep-thumb"><img src="https://i.ytimg.com/vi/${esc(e.youtube)}/mqdefault.jpg" alt="" loading="lazy" onerror="this.remove()"></span>
+    <div class="ep-main"><div class="ep-meta">${showLogo(s, "xs")}<span class="showname">${esc(s.name)}</span><span>${esc(e.format)} · ${fmtDate(e.date)}</span><span class="dur">${fmtDur(e.duration)}</span>${extra}</div>
+      <h3 class="ep-title">${esc(e.title)}</h3><p class="ep-sum">${esc(e.summary)}</p>
       <div class="topics">${e.topics.map(t => `<span>${esc(t)}</span>`).join("")}</div></div>
     <div class="people">${e.people.map(p => personHTML(p, s)).join("")}</div>
   </a>`;
@@ -39,7 +45,7 @@ function renderHome() {
       <h1>Every new episode, in one place.</h1>
       <p>Browse what just dropped, or tell us what you're in the mood for and we'll pick for you.</p>
       <div class="cta"><a class="btn" href="#find">Find me an episode</a><a class="btn ghost" href="#shows">Browse shows</a></div></div>
-    <div class="shows" id="shows">${SHOWS.map(s => `<a class="show-row card" href="#show-${s.id}" style="--show:${s.color}"><span class="stripe"></span><span><strong>${esc(s.name)}</strong><span>${esc(s.tagline)}</span></span><span class="count">${count(s.id)} ep</span></a>`).join("")}</div>
+    <div class="shows" id="shows">${SHOWS.map(s => `<a class="show-row card" href="#show-${s.id}" style="${showVars(s)}">${showLogo(s, "sm")}<span><strong>${esc(s.name)}</strong><span>${esc(s.tagline)}</span></span><span class="count">${count(s.id)} ep</span></a>`).join("")}</div>
   </section>
   <section class="ask card"><div><h2>Not sure what to play?</h2><p>Answer three quick questions and get episodes matched to your topic, your time and how you like to listen.</p></div>
     <a class="btn accent" href="#find">Find me an episode</a></section>
@@ -126,10 +132,12 @@ function renderShow(id) {
   const s = showById(id); if (!s) return renderHome();
   const list = sorted().filter(e => e.show === id);
   app.innerHTML = `
-  <section class="ep-hero" style="--show:${s.color}"><a class="back" href="#home">← All episodes</a>
-    <p class="eyebrow showtag"><span class="dot"></span>${esc(s.org)}</p><div class="ep-title-row"><h1>${esc(s.name)}</h1>${isAdmin() ? `<a class="editbtn" href="#admin-edit-show-${s.id}">Edit show</a>` : ""}</div>
-    <p style="max-width:56ch;color:var(--muted);margin:0">${esc(s.about)}</p>
-    <div class="line"><span>Hosted by ${esc(s.hosts.join(", "))}</span><span>${list.length} episodes</span></div></section>
+  <a class="back" href="#home">← All episodes</a>
+  <section class="show-band card" style="${showVars(s)}">${showLogo(s, "lg")}<div>
+    <p class="eyebrow">${esc(s.org)}</p><div class="ep-title-row"><h1>${esc(s.name)}</h1>${isAdmin() ? `<a class="editbtn" href="#admin-edit-show-${s.id}">Edit show</a>` : ""}</div>
+    <p class="tag">${esc(s.tagline)}</p>
+    <p class="about">${esc(s.about)}</p>
+    <div class="line"><span>Hosted by ${esc(s.hosts.join(", "))}</span><span>${list.length} episodes</span></div></div></section>
   <div class="ep-list">${list.length ? list.map(e => episodeRow(e)).join("") : `<p class="tx-empty">No episodes yet. The first one is coming soon.</p>`}</div>`;
   setNav("#show-" + id);
 }
@@ -151,17 +159,17 @@ function renderEpisode(e) {
   related.forEach(r => { if (pick.length < 4 && !pick.includes(r)) pick.push(r); });
   const video = SELF_HOSTED && location.protocol !== "file:" // YouTube refuses embeds on file:// pages, so opened from disk the page falls back to the thumbnail link
     ? `<iframe src="https://www.youtube-nocookie.com/embed/${e.youtube}" title="${esc(e.title)}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`
-    : `<a class="video" href="${yt(e.youtube)}" target="_blank" rel="noopener" style="--show:${s.color}"><img class="thumb" src="${ytThumb(e.youtube)}" alt="" onerror="if(!this.dataset.hq){this.dataset.hq=1;this.src='https://i.ytimg.com/vi/${e.youtube}/hqdefault.jpg'}else{this.remove()}"><span class="pb"><svg width="32" height="32" viewBox="0 0 24 24" fill="#0F2F33"><path d="M8 5v14l11-7z"/></svg></span><span class="cap">Watch on YouTube · ${fmtDur(e.duration)}</span></a>`;
+    : `<a class="video" href="${yt(e.youtube)}" target="_blank" rel="noopener" style="${showVars(s)}"><img class="thumb" src="${ytThumb(e.youtube)}" alt="" onerror="if(!this.dataset.hq){this.dataset.hq=1;this.src='https://i.ytimg.com/vi/${e.youtube}/hqdefault.jpg'}else{this.remove()}"><span class="pb"><svg width="32" height="32" viewBox="0 0 24 24" fill="#0F2F33"><path d="M8 5v14l11-7z"/></svg></span><span class="cap">Watch on YouTube · ${fmtDur(e.duration)}</span></a>`;
   const n = e.notes || {}, has = a => Array.isArray(a) && a.length > 0; // notes and each section are optional (see tools/check-data.js)
   const cueHTML = c => `<div class="cue" data-text="${esc(c.x.toLowerCase())}"><a class="t" href="${yt(e.youtube, c.t)}" target="_blank" rel="noopener">${ts(c.t)}</a><span class="sp">${esc(c.s)}</span><p>${esc(c.x)}</p></div>`;
   app.innerHTML = `
-  <section class="ep-hero" style="--show:${s.color}"><a class="back" href="#home">← All episodes</a>
-    <p class="eyebrow showtag"><a href="#show-${s.id}"><span class="dot"></span>${esc(s.name)}</a></p>
+  <section class="ep-hero" style="${showVars(s)}"><a class="back" href="#home">← All episodes</a>
+    <p class="eyebrow showtag"><a href="#show-${s.id}">${showLogo(s, "xs")}${esc(s.name)}</a></p>
     <div class="ep-title-row"><h1>${esc(e.title)}</h1>${isAdmin() ? `<a class="editbtn" href="#admin-edit-${e.id}">Edit episode</a>` : ""}</div>
     <div class="line"><span class="badge">${esc(e.format)}</span><span>${fmtDate(e.date)}</span><span class="dur">${fmtDur(e.duration)}</span><span>${e.topics.map(esc).join(" · ")}</span></div>
     <p style="max-width:62ch;color:var(--muted);margin:0;font-size:17px">${esc(e.summary)}</p></section>
-  <section class="play card" style="--show:${s.color}">${video}<div class="cast">${e.people.map(p => personHTML(p, s)).join("")}</div></section>
-  <div class="two" style="--show:${s.color}">
+  <section class="play card" style="${showVars(s)}">${video}<div class="cast">${e.people.map(p => personHTML(p, s)).join("")}</div></section>
+  <div class="two" style="${showVars(s)}">
     <section class="card"><div class="tx-head"><h2>Transcript</h2><input class="tx-search" id="tx-search" type="search" placeholder="Search this transcript"></div>
       <div class="tx" id="tx">${e.transcript.length ? e.transcript.map(cueHTML).join("") : `<p class="tx-empty">Transcript coming soon.</p>`}</div></section>
     <aside class="notes card"><h2>Show notes</h2>
