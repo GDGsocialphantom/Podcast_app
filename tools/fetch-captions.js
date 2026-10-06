@@ -76,7 +76,9 @@ function viaYtDlp(youtubeId) {
   const files = fs.existsSync(tmp) ? fs.readdirSync(tmp).filter(f => f.endsWith(".json3")) : [];
   if (!files.length) {
     fs.rmSync(tmp, { recursive: true, force: true });
-    if (r.status !== 0) throw new Error("yt-dlp failed: " + (r.stderr || r.stdout || "").trim().split("\n").pop());
+    const tail = (r.stderr || r.stdout || "").trim().split("\n").filter(Boolean).pop() || "";
+    if (r.status !== 0) throw new Error("yt-dlp failed: " + tail);
+    if (/sign in|bot|cookies|429|unavailable/i.test(tail)) throw new Error("yt-dlp blocked: " + tail);
     return { none: true };
   }
   // yt-dlp writes cap.en.json3 for manual subs and the same name for auto subs when no manual track exists; "en-orig" marks the original-language auto track
@@ -112,13 +114,14 @@ const fileSource = cues => "[\n" + cues.map(c => `  { "t": ${c.t}, "s": ${q(c.s)
     const file = path.join(outDir, e.id + ".json");
     if (e.missing) { console.log(`${e.id}: no such episode in data/episodes.js`); failed++; failures.push(e.id); continue; }
     if (fs.existsSync(file) && !force) { console.log(`${e.id}: already has a transcript, skipping (use --force)`); skipped++; continue; }
-    let result, how = "direct";
-    try {
-      result = await viaDirect(e.youtube);
-    } catch (err) {
-      if (!hasYtDlp) { console.log(`${e.id}: FAILED, ${err.message}`); failed++; failures.push(e.id); await sleep(1000); continue; }
+    // Direct first; if it fails or sees no caption tracks (YouTube serves some clients a stripped page), yt-dlp decides.
+    let result, how = "direct", directErr = null;
+    try { result = await viaDirect(e.youtube); } catch (err) { directErr = err; }
+    if ((!result || result.none) && hasYtDlp) {
       try { how = "yt-dlp"; result = viaYtDlp(e.youtube); }
       catch (err2) { console.log(`${e.id}: FAILED, ${err2.message}`); failed++; failures.push(e.id); await sleep(1000); continue; }
+    } else if (!result) {
+      console.log(`${e.id}: FAILED, ${directErr.message}`); failed++; failures.push(e.id); await sleep(1000); continue;
     }
     if (result.none) { console.log(`${e.id}: no captions on YouTube`); none++; await sleep(1000); continue; }
     const speaker = e.format === "Solo" ? hostOf(e) : "Speaker";
