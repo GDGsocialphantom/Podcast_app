@@ -32,6 +32,9 @@ for (const s of SHOWS || []) {
   if (showIds.has(s.id)) bad(id, "duplicate show id");
   showIds.add(s.id);
   for (const k of ["name", "color", "org", "tagline", "about"]) if (!s[k]) bad(id, `show missing ${k}`);
+  if (s.color && !/^#[0-9a-fA-F]{6}$/.test(s.color)) bad(id, "color should be a 6-digit hex like #1F2937");
+  if (s.ink && !/^#[0-9a-fA-F]{6}$/.test(s.ink)) bad(id, "ink should be a 6-digit hex");
+  if (s.logo && !/^assets\/shows\/[a-z0-9-]+\.(png|svg|jpg|webp)$/.test(s.logo)) bad(id, "logo should be a file under assets/shows/");
   if (!Array.isArray(s.hosts) || !s.hosts.length) bad(id, "show has no hosts");
 }
 

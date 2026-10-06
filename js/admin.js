@@ -62,7 +62,7 @@ function episodeSource(e) {
     } },`;
 }
 function showSource(s) {
-  return `  { id: ${q(s.id)}, name: ${q(s.name)}, color: ${q(s.color)}, org: ${q(s.org)},
+  return `  { id: ${q(s.id)}, name: ${q(s.name)}, color: ${q(s.color)}, ink: ${q(s.ink || "#FFFFFF")}, logo: ${q(s.logo || "assets/shows/" + s.id + ".png")}, org: ${q(s.org)},
     tagline: ${q(s.tagline)},
     hosts: [${s.hosts.map(q).join(", ")}],
     about: ${q(s.about)} },`;
@@ -105,6 +105,8 @@ function validateShow(s, editingId) {
     if (s.id !== editingId && SHOWS.some(x => x.id === s.id)) p.push(`A show with id "${s.id}" already exists.`);
   }
   for (const k of ["name", "color", "org", "tagline", "about"]) if (!s[k]) p.push(`Needs ${k}.`);
+  if (s.color && !/^#[0-9a-fA-F]{6}$/.test(s.color)) p.push("Brand color should be a 6-digit hex like #1F2937.");
+  if (s.ink && !/^#[0-9a-fA-F]{6}$/.test(s.ink)) p.push("Text color should be a 6-digit hex.");
   if (!s.hosts.length) p.push("Add at least one host.");
   return p;
 }
@@ -237,12 +239,11 @@ function renderEpisodeEditor(id) {
 }
 
 /* ---------- show editor ---------- */
-const COLOR_OPTIONS = [["var(--eko)", "Lime (EKO)"], ["var(--court)", "Blue (Court Ordered)"], ["var(--sessions)", "Amber (Sessions)"], ["var(--disruption)", "Violet (Disruption Lab)"]];
+// Brand color is a hex value per show (see data/shows.js). Ink is the text color that reads on top of it.
 function renderShowEditor(id) {
   const existing = id ? showById(id) : null;
   if (id && !existing) return renderHome();
-  const seed = loadDraft("show", id) || (existing ? { ...existing, hosts: existing.hosts.join("\n") } : { id: "", name: "", color: "", org: "", tagline: "", hosts: "", about: "" });
-  const customColor = seed.color && !COLOR_OPTIONS.some(([c]) => c === seed.color);
+  const seed = loadDraft("show", id) || (existing ? { ...existing, hosts: existing.hosts.join("\n") } : { id: "", name: "", color: "#1F2937", ink: "#FFFFFF", logo: "", org: "", tagline: "", hosts: "", about: "" });
 
   adminShell({
     title: existing ? "Edit show" : "Add show",
@@ -254,7 +255,9 @@ function renderShowEditor(id) {
         ${field("name", "Show name", input("name", seed.name))}
         ${field("id", "Show id", input("id", seed.id, "text", existing ? "readonly" : ""), existing ? "episodes reference this, so it can't change here" : "lowercase, e.g. sessions")}
         ${field("org", "Organization", input("org", seed.org))}
-        ${field("color", "Color", select("colorpick", customColor ? "custom" : seed.color, [...COLOR_OPTIONS, ["custom", "Custom hex"]]) + input("color", customColor ? seed.color : "", "text", `placeholder="#F59E0B" ${customColor ? "" : "hidden"}`), "existing show colors are variables in css/site.css")}
+        ${field("color", "Brand color", input("color", seed.color, "text", `placeholder="#1F2937"`), "hex, e.g. #1F2937")}
+        ${field("ink", "Text on brand color", input("ink", seed.ink || "#FFFFFF", "text", `placeholder="#FFFFFF"`), "white or near-black, whichever reads on the brand color")}
+        ${field("logo", "Logo file", input("logo", seed.logo, "text", `placeholder="assets/shows/${seed.id || "showid"}.png"`), "put the PNG or SVG in assets/shows/; blank uses assets/shows/<id>.png")}
       </div>
       ${field("tagline", "Tagline", input("tagline", seed.tagline))}
       ${field("hosts", "Hosts", area("hosts", seed.hosts, 3), "one per line")}
@@ -272,14 +275,13 @@ function renderShowEditor(id) {
   const form = document.getElementById("show-form"), code = document.getElementById("show-code"), probs = document.getElementById("show-problems"), where = document.getElementById("show-where");
   function update() {
     const vals = Object.fromEntries(new FormData(form).entries());
-    form.color.hidden = vals.colorpick !== "custom";
-    const color = vals.colorpick === "custom" ? (vals.color || "").trim() : vals.colorpick;
-    const s = { id: (vals.id || "").trim().toLowerCase(), name: vals.name.trim(), color, org: vals.org.trim(), tagline: vals.tagline.trim(), hosts: lines(vals.hosts), about: vals.about.trim() };
+    const color = (vals.color || "").trim(), sid = (vals.id || "").trim().toLowerCase();
+    const s = { id: sid, name: vals.name.trim(), color, ink: (vals.ink || "").trim() || "#FFFFFF", logo: (vals.logo || "").trim() || `assets/shows/${sid}.png`, org: vals.org.trim(), tagline: vals.tagline.trim(), hosts: lines(vals.hosts), about: vals.about.trim() };
     saveDraft("show", id, { ...vals, color, hosts: vals.hosts });
     const problems = validateShow(s, id);
     probs.innerHTML = problems.map(p => `<li>${esc(p)}</li>`).join("");
     probs.hidden = !problems.length;
-    where.textContent = existing ? `Replace the object with id "${id}" in data/shows.js with this.` : `Add this inside the SHOWS array in data/shows.js. New shows also need a nav color: a hex value works as is.`;
+    where.textContent = existing ? `Replace the object with id "${id}" in data/shows.js with this.` : `Add this inside the SHOWS array in data/shows.js. Then drop the logo file into assets/shows/.`;
     code.textContent = showSource(s);
   }
   form.oninput = update; form.onchange = update; form.onsubmit = ev => ev.preventDefault();
