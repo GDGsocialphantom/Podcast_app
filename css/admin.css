@@ -30,3 +30,29 @@
   .admin-out { position: static; }
   .admin-form .grid2 { grid-template-columns: 1fr; }
 }
+
+/* show branding: color pickers, logo upload and the site mock-ups */
+.admin-form fieldset.brand { border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px 16px; margin: 0; display: grid; gap: 14px; }
+.admin-form fieldset.brand legend { font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); padding: 0 6px; }
+.colorrow { display: flex; align-items: center; gap: 8px; }
+.colorrow input[type="color"] { width: 40px; height: 38px; padding: 2px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); cursor: pointer; flex: none; }
+.colorrow input[type="color"]:disabled { opacity: .4; cursor: default; }
+.colorrow input[name="color"], .colorrow input[name="ink"] { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; text-transform: uppercase; width: 110px; }
+.colorrow input[readonly] { color: var(--muted); background: var(--bg); }
+.colorrow .chk { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 500; white-space: nowrap; }
+.colorrow .chk input { width: auto; margin: 0; accent-color: var(--primary-ink); }
+.logorow { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.logorow input[type="file"] { width: auto; padding: 6px 8px; font-size: 13px; }
+.logo-meta { font-size: 12.5px; color: var(--muted); }
+.btnrow { display: flex; gap: 8px; align-items: center; }
+.brand-preview { gap: 16px; }
+.brand-preview .label { display: block; font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+.brand-preview .mock-side { background: var(--side); color: var(--side-ink); border-radius: 8px; padding: 10px 12px 12px; }
+.brand-preview .mock-side .label { color: var(--side-muted); }
+.brand-preview .mock-side a { display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 500; padding: 9px 10px; border-radius: 6px; color: var(--side-muted); background: rgba(255,255,255,.06); }
+.brand-preview .show-row { pointer-events: none; }
+.brand-preview .show-band { margin: 0; padding: 20px; gap: 16px; grid-template-columns: 112px 1fr; }
+.brand-preview .show-band h1 { font-size: 22px; }
+.brand-preview .ep { grid-template-columns: 4px 1fr; gap: 6px 16px; pointer-events: none; }
+.brand-preview .ep .stripe { grid-row: 1 / span 2; }
+.brand-preview .ep .ep-thumb, .brand-preview .ep .people { display: none; }

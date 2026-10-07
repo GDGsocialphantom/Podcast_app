@@ -238,16 +238,77 @@ function renderEpisodeEditor(id) {
   update();
 }
 
-/* ---------- show editor ---------- */
+/* ---------- show editor and branding ---------- */
 // Brand color is a hex value per show (see data/shows.js). Ink is the text color that reads on top of it.
+// The logo is uploaded here only to preview and to download a correctly named file; nothing is written
+// until the backend exists (claude/known-issues.md, Planned step 3). When it does, Save and logo upload
+// wire into prepareLogo() and showSource() below.
+const LOGO_MAX_PX = 512;            // raster logos are scaled so the longer side is at most this
+const LOGO_DRAFT_MAX = 1024 * 1024; // data URLs bigger than this stay in memory and are not saved to the draft
+const LOGO_TYPES = { "image/png": "png", "image/svg+xml": "svg", "image/jpeg": "jpg", "image/webp": "webp" };
+
+const hexOk = h => /^#[0-9a-fA-F]{6}$/.test(h || "");
+function luminance(hex) {   // WCAG relative luminance, 0 (black) to 1 (white)
+  const n = parseInt(hex.slice(1), 16), ch = [n >> 16 & 255, n >> 8 & 255, n & 255].map(v => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); });
+  return 0.2126 * ch[0] + 0.7152 * ch[1] + 0.0722 * ch[2];
+}
+const suggestInk = hex => hexOk(hex) && luminance(hex) > 0.4 ? "#292929" : "#FFFFFF";
+const logoExt = path => ((path || "").match(/\.(png|svg|jpg|webp)$/) || [])[1] || "png";
+
+// Reads a logo file from the admin's computer and returns { ext, dataUrl, bytes }.
+// SVG passes through untouched. Raster images are scaled to LOGO_MAX_PX on the longer side;
+// PNG and WebP come out as PNG (keeps transparency), JPEG stays JPEG.
+function prepareLogo(file) {
+  return new Promise((resolve, reject) => {
+    const ext = LOGO_TYPES[file.type];
+    if (!ext) return reject(new Error("Use a PNG, SVG, JPG or WebP file."));
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error("Couldn't read that file."));
+    if (ext === "svg") {
+      reader.onload = () => resolve({ ext, dataUrl: "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(reader.result))), bytes: file.size });
+      return reader.readAsText(file);
+    }
+    reader.onload = () => {
+      const img = new Image();
+      img.onerror = () => reject(new Error("That image couldn't be decoded."));
+      img.onload = () => {
+        const scale = Math.min(1, LOGO_MAX_PX / Math.max(img.naturalWidth, img.naturalHeight));
+        const w = Math.max(1, Math.round(img.naturalWidth * scale)), h = Math.max(1, Math.round(img.naturalHeight * scale));
+        const c = document.createElement("canvas"); c.width = w; c.height = h;
+        c.getContext("2d").drawImage(img, 0, 0, w, h);
+        const outExt = ext === "jpg" ? "jpg" : "png";
+        const dataUrl = c.toDataURL(outExt === "jpg" ? "image/jpeg" : "image/png", 0.9);
+        resolve({ ext: outExt, dataUrl, bytes: Math.round((dataUrl.length - dataUrl.indexOf(",") - 1) * 3 / 4), width: w, height: h, from: [img.naturalWidth, img.naturalHeight] });
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+// Mock-ups of every place the site shows a logo or brand color, rendered with the draft show.
+function brandPreview(s, logoSrc) {
+  const p = { ...s, logo: logoSrc || s.logo };
+  const sample = EPISODES.find(e => e.show === s.id) || EPISODES[0] || { id: "x", youtube: "", format: "Interview", date: new Date().toISOString().slice(0, 10), duration: 42, title: "Episode title goes here", summary: "A one-line summary of the episode, as it appears on the home page.", topics: ["Topic", "Another"], people: [{ n: s.hosts[0] || "Host", r: "Host" }] };
+  const ep = episodeRow({ ...sample, show: s.id, people: sample.people.slice(0, 2) }, "", p).replace(/href="[^"]*"/g, "");
+  return `
+    <div class="mock-side" style="${showVars(p)}"><span class="label">Sidebar</span><a>${showLogo(p, "xs")}<span class="txt">${esc(s.name || "Show name")}</span></a></div>
+    <div><span class="label">Show list</span><div class="show-row card" style="${showVars(p)}">${showLogo(p, "sm")}<span><strong>${esc(s.name || "Show name")}</strong><span>${esc(s.tagline || "Tagline")}</span></span><span class="count">${EPISODES.filter(e => e.show === s.id).length} ep</span></div></div>
+    <div><span class="label">Show page</span><section class="show-band card" style="${showVars(p)}">${showLogo(p, "lg")}<div><p class="eyebrow">${esc(s.org || "Organization")}</p><h1>${esc(s.name || "Show name")}</h1><p class="tag">${esc(s.tagline || "Tagline")}</p><div class="line"><span>Hosted by ${esc(s.hosts.join(", ") || "Host")}</span></div></div></section></div>
+    <div><span class="label">Episode card</span><div class="ep-list">${ep}</div></div>`;
+}
+
 function renderShowEditor(id) {
   const existing = id ? showById(id) : null;
   if (id && !existing) return renderHome();
-  const seed = loadDraft("show", id) || (existing ? { ...existing, hosts: existing.hosts.join("\n") } : { id: "", name: "", color: "#1F2937", ink: "#FFFFFF", logo: "", org: "", tagline: "", hosts: "", about: "" });
+  const draft = loadDraft("show", id);
+  const seed = draft || (existing ? { ...existing, hosts: existing.hosts.join("\n"), inkauto: existing.ink === suggestInk(existing.color) } : { id: "", name: "", color: "#1F2937", ink: "#FFFFFF", inkauto: true, logo: "", org: "", tagline: "", hosts: "", about: "" });
+  let logoData = draft && draft.logoData ? draft.logoData : null;   // { ext, dataUrl, bytes } from an upload this session or a saved draft
+  const inkauto = seed.inkauto !== false && seed.inkauto !== "";
 
   adminShell({
     title: existing ? "Edit show" : "Add show",
-    sub: NOWRITE + (existing ? ` Editing <strong>${esc(existing.name)}</strong>.` : ""),
+    sub: NOWRITE + (existing ? ` Editing <strong>${esc(existing.name)}</strong>.` : "") + ` Brand color, text color and logo preview below exactly as the site renders them.`,
     back: existing ? "#show-" + existing.id : "#admin-shows", backLabel: existing ? "Back to show" : "All shows",
     form: `<div class="admin">
     <form class="card admin-form" id="show-form" autocomplete="off">
@@ -255,17 +316,24 @@ function renderShowEditor(id) {
         ${field("name", "Show name", input("name", seed.name))}
         ${field("id", "Show id", input("id", seed.id, "text", existing ? "readonly" : ""), existing ? "episodes reference this, so it can't change here" : "lowercase, e.g. sessions")}
         ${field("org", "Organization", input("org", seed.org))}
-        ${field("color", "Brand color", input("color", seed.color, "text", `placeholder="#1F2937"`), "hex, e.g. #1F2937")}
-        ${field("ink", "Text on brand color", input("ink", seed.ink || "#FFFFFF", "text", `placeholder="#FFFFFF"`), "white or near-black, whichever reads on the brand color")}
-        ${field("logo", "Logo file", input("logo", seed.logo, "text", `placeholder="assets/shows/${seed.id || "showid"}.png"`), "put the PNG or SVG in assets/shows/; blank uses assets/shows/<id>.png")}
+        ${field("tagline", "Tagline", input("tagline", seed.tagline))}
       </div>
-      ${field("tagline", "Tagline", input("tagline", seed.tagline))}
+      <fieldset class="brand"><legend>Branding</legend>
+        <div class="grid2">
+          <label class="fld"><span>Brand color<small>stripes, tiles, show band</small></span><span class="colorrow"><input type="color" name="colorpick" value="${esc(hexOk(seed.color) ? seed.color : "#1F2937")}" aria-label="Pick brand color"><input name="color" value="${esc(seed.color || "")}" placeholder="#1F2937" maxlength="7"></span></label>
+          <label class="fld"><span>Text on brand color<small>suggested from the color's brightness</small></span><span class="colorrow"><input type="color" name="inkpick" value="${esc(hexOk(seed.ink) ? seed.ink : "#FFFFFF")}" aria-label="Pick text color" ${inkauto ? "disabled" : ""}><input name="ink" value="${esc(seed.ink || "")}" placeholder="#FFFFFF" maxlength="7" ${inkauto ? "readonly" : ""}><label class="chk"><input type="checkbox" name="inkauto" ${inkauto ? "checked" : ""}>Auto</label></span></label>
+        </div>
+        <label class="fld"><span>Logo<small>PNG, SVG, JPG or WebP. Square or wide, transparent background works best. Rasters are scaled to ${LOGO_MAX_PX}px.</small></span>
+          <span class="logorow"><input type="file" name="logofile" accept="image/png,image/svg+xml,image/jpeg,image/webp"><span class="logo-meta" id="logo-meta"></span><button type="button" class="btn ghost small" id="logo-clear" hidden>Remove upload</button></span></label>
+        <p class="admin-where" id="logo-path"></p>
+      </fieldset>
       ${field("hosts", "Hosts", area("hosts", seed.hosts, 3), "one per line")}
       ${field("about", "About", area("about", seed.about, 3))}
       <div class="admin-actions"><button type="button" class="btn ghost small" id="show-clear">Reset form</button><span class="eyebrow">Draft saves as you type</span></div>
     </form>
     <div class="admin-out">
-      <div class="card admin-code"><div class="admin-code-head"><p class="eyebrow">Paste into data/shows.js</p><button type="button" class="btn small" id="show-copy">Copy</button></div>
+      <div class="card admin-preview brand-preview" id="brand-preview"></div>
+      <div class="card admin-code"><div class="admin-code-head"><p class="eyebrow">Paste into data/shows.js</p><span class="btnrow"><a class="btn ghost small" id="logo-download" hidden download>Download logo</a><button type="button" class="btn small" id="show-copy">Copy</button></span></div>
         <ul class="problems" id="show-problems"></ul>
         <p class="admin-where" id="show-where"></p>
         <pre id="show-code"></pre></div>
@@ -273,18 +341,55 @@ function renderShowEditor(id) {
   });
 
   const form = document.getElementById("show-form"), code = document.getElementById("show-code"), probs = document.getElementById("show-problems"), where = document.getElementById("show-where");
-  function update() {
+  const preview = document.getElementById("brand-preview"), logoMeta = document.getElementById("logo-meta"), logoPath = document.getElementById("logo-path"), logoClear = document.getElementById("logo-clear"), logoDownload = document.getElementById("logo-download");
+  let logoError = "";
+
+  function currentShow() {
     const vals = Object.fromEntries(new FormData(form).entries());
-    const color = (vals.color || "").trim(), sid = (vals.id || "").trim().toLowerCase();
-    const s = { id: sid, name: vals.name.trim(), color, ink: (vals.ink || "").trim() || "#FFFFFF", logo: (vals.logo || "").trim() || `assets/shows/${sid}.png`, org: vals.org.trim(), tagline: vals.tagline.trim(), hosts: lines(vals.hosts), about: vals.about.trim() };
-    saveDraft("show", id, { ...vals, color, hosts: vals.hosts });
+    const sid = (vals.id || "").trim().toLowerCase();
+    const color = (vals.color || "").trim();
+    const ink = form.inkauto.checked ? suggestInk(color) : (vals.ink || "").trim();
+    const ext = logoData ? logoData.ext : logoExt(existing && existing.id === sid ? existing.logo : "");
+    return { vals, s: { id: sid, name: vals.name.trim(), color, ink, logo: sid ? `assets/shows/${sid}.${ext}` : "", org: vals.org.trim(), tagline: vals.tagline.trim(), hosts: lines(vals.hosts), about: vals.about.trim() } };
+  }
+  function update() {
+    const { vals, s } = currentShow();
+    // keep the two color controls in step
+    if (hexOk(s.color)) form.colorpick.value = s.color;
+    if (form.inkauto.checked) { form.ink.value = s.ink; form.ink.readOnly = true; form.inkpick.disabled = true; } else { form.ink.readOnly = false; form.inkpick.disabled = false; }
+    if (hexOk(s.ink)) form.inkpick.value = s.ink;
+    saveDraft("show", id, { ...vals, color: s.color, ink: s.ink, inkauto: form.inkauto.checked, hosts: vals.hosts, logoData: logoData && logoData.bytes <= LOGO_DRAFT_MAX ? logoData : null });
     const problems = validateShow(s, id);
+    if (logoError) problems.push("Logo: " + logoError);
+    if (s.logo && !/^assets\/shows\/[a-z0-9-]+\.(png|svg|jpg|webp)$/.test(s.logo)) problems.push("Logo path should be assets/shows/<id>.<png|svg|jpg|webp>.");
     probs.innerHTML = problems.map(p => `<li>${esc(p)}</li>`).join("");
     probs.hidden = !problems.length;
-    where.textContent = existing ? `Replace the object with id "${id}" in data/shows.js with this.` : `Add this inside the SHOWS array in data/shows.js. Then drop the logo file into assets/shows/.`;
+    const file = s.logo ? s.logo.split("/").pop() : "<id>.png";
+    where.textContent = (existing ? `Replace the object with id "${id}" in data/shows.js with this.` : `Add this inside the SHOWS array in data/shows.js.`) + (logoData ? ` Put the downloaded ${file} in assets/shows/, then run node tools/check-data.js and commit.` : ` Put the logo at ${s.logo || "assets/shows/<id>.png"}, then run node tools/check-data.js and commit.`);
     code.textContent = showSource(s);
+    logoPath.textContent = s.logo ? `Saved as ${s.logo}` + (logoData ? "" : existing && existing.logo === s.logo ? " (current file)" : " (file not uploaded yet; the site shows a monogram until it exists)") : "Enter a show id to set the logo path.";
+    logoMeta.textContent = logoData ? `${logoData.ext.toUpperCase()}${logoData.width ? `, ${logoData.width}×${logoData.height}px` : ""}${logoData.from && (logoData.from[0] !== logoData.width || logoData.from[1] !== logoData.height) ? ` (scaled from ${logoData.from[0]}×${logoData.from[1]})` : ""}, ${logoData.bytes < 1024 ? "under 1" : Math.round(logoData.bytes / 1024)} KB${logoData.bytes > LOGO_DRAFT_MAX ? ", too big to keep in the draft" : ""}` : "";
+    logoClear.hidden = !logoData;
+    logoDownload.hidden = !logoData;
+    if (logoData) { logoDownload.href = logoData.dataUrl; logoDownload.download = file; }
+    preview.innerHTML = brandPreview(s, logoData ? logoData.dataUrl : null);
   }
-  form.oninput = update; form.onchange = update; form.onsubmit = ev => ev.preventDefault();
+  form.oninput = ev => {
+    if (ev.target.name === "colorpick") form.color.value = ev.target.value.toUpperCase();
+    if (ev.target.name === "inkpick") form.ink.value = ev.target.value.toUpperCase();
+    if (ev.target.name === "color" && hexOk(form.color.value)) form.color.value = form.color.value.toUpperCase();
+    update();
+  };
+  form.onchange = ev => {
+    if (ev.target.name === "logofile" && ev.target.files[0]) {
+      logoError = "";
+      prepareLogo(ev.target.files[0]).then(d => { logoData = d; update(); }).catch(err => { logoError = err.message; logoData = null; update(); });
+      return;
+    }
+    update();
+  };
+  form.onsubmit = ev => ev.preventDefault();
+  logoClear.onclick = () => { logoData = null; logoError = ""; form.logofile.value = ""; update(); };
   document.getElementById("show-copy").onclick = ev => copyText(code.textContent, ev.currentTarget);
   document.getElementById("show-clear").onclick = () => { clearDraft("show", id); renderShowEditor(id); };
   update();
