@@ -38,6 +38,11 @@ for (const s of SHOWS || []) {
   if (!Array.isArray(s.hosts) || !s.hosts.length) bad(id, "show has no hosts");
 }
 
+// Episodes whose people line carries a "// TODO full name" comment: a first-name-only guest is known and waiting on records.
+const episodesSrc = fs.readFileSync(path.join(root, "data/episodes.js"), "utf8");
+const todoIds = new Set();
+for (const block of episodesSrc.split(/\n(?=  \{ id: ")/)) { const m = block.match(/id: "([^"]+)"/); if (m && /\/\/\s*TODO full name/.test(block)) todoIds.add(m[1]); }
+
 const epIds = new Set();
 const SAMPLE_YT = "dQw4w9WgXcQ";
 for (const e of EPISODES || []) {
@@ -55,7 +60,10 @@ for (const e of EPISODES || []) {
   if (typeof e.duration !== "number" || e.duration <= 0) bad(id, "duration should be a number of minutes");
   if (!Array.isArray(e.topics) || !e.topics.length) bad(id, "no topics");
   if (!Array.isArray(e.people) || !e.people.length) bad(id, "no people");
-  for (const p of e.people || []) if (!p.n || !p.r) bad(id, "each person needs n (name) and r (role)");
+  for (const p of e.people || []) {
+    if (!p.n || !p.r) { bad(id, "each person needs n (name) and r (role)"); continue; }
+    if (!/\s/.test(p.n.trim()) && !todoIds.has(e.id)) console.warn(`warning ${id}: person "${p.n}" has no last name; add it, or mark the people line with // TODO full name`);
+  }
   if (!e.youtube || !/^[\w-]{11}$/.test(e.youtube)) bad(id, "youtube should be an 11-character video id");
   if (e.youtube === SAMPLE_YT) console.warn(`warning ${id}: still using the sample YouTube id`);
   if ("transcript" in e) bad(id, "transcripts no longer live in episodes.js; move it to data/transcripts/" + e.id + ".json");

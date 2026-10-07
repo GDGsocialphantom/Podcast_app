@@ -213,3 +213,4 @@ footer { border-top: 1px solid var(--line); padding: 20px 36px 32px; color: var(
   footer { padding-inline: 16px; }
 }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+.more-row { display: flex; align-items: center; gap: 14px; justify-content: center; padding: 18px 0 6px; }

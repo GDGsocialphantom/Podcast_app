@@ -36,8 +36,11 @@ function episodeRow(e, extra = "", show = null) {
 
 /* ---------- home ---------- */
 let filter = "all";
+const HOME_PAGE = 15;      // episodes shown on the home page before "Show more"
+let homeLimit = HOME_PAGE;
 function renderHome() {
   const list = sorted().filter(e => filter === "all" || e.show === filter);
+  const shown = list.slice(0, homeLimit);
   const count = id => EPISODES.filter(e => e.show === id).length;
   app.innerHTML = `
   <section class="mast">
@@ -52,21 +55,39 @@ function renderHome() {
   <section>
     <div class="section-head"><h2>New episodes</h2>
       <div class="filters">${[["all", "All shows"], ...SHOWS.map(s => [s.id, s.name])].map(([id, n]) => `<button class="chip" data-filter="${id}" aria-pressed="${filter === id}">${esc(n)}</button>`).join("")}</div></div>
-    <div class="ep-list">${list.length ? list.map(e => episodeRow(e)).join("") : `<p class="tx-empty">No episodes yet for ${esc((showById(filter) || { name: "this show" }).name)}. First one is coming soon.</p>`}</div>
+    <div class="ep-list" id="home-list">${list.length ? shown.map(e => episodeRow(e)).join("") : `<p class="tx-empty">No episodes yet for ${esc((showById(filter) || { name: "this show" }).name)}. First one is coming soon.</p>`}</div>
+    ${list.length > shown.length ? `<div class="more-row"><button class="btn ghost" id="home-more">Show more</button><span class="eyebrow">${shown.length} of ${list.length} episodes</span></div>` : ""}
   </section>`;
-  app.querySelectorAll("[data-filter]").forEach(b => b.onclick = () => { filter = b.dataset.filter; renderHome(); });
+  app.querySelectorAll("[data-filter]").forEach(b => b.onclick = () => { filter = b.dataset.filter; homeLimit = HOME_PAGE; renderHome(); });
+  const more = document.getElementById("home-more");
+  if (more) more.onclick = () => {   // append the next page in place so the scroll position holds
+    const next = list.slice(homeLimit, homeLimit + HOME_PAGE);
+    homeLimit += HOME_PAGE;
+    document.getElementById("home-list").insertAdjacentHTML("beforeend", next.map(e => episodeRow(e)).join(""));
+    const row = more.parentNode;
+    if (homeLimit >= list.length) row.remove(); else row.querySelector(".eyebrow").textContent = `${Math.min(homeLimit, list.length)} of ${list.length} episodes`;
+  };
   setNav("#home");
 }
 
 /* ---------- find (form + results) ---------- */
-const TOPICS = ["Entrepreneurship", "Investing", "Real estate", "Leadership", "Hiring", "AI", "Startups", "Community", "Social impact", "Climate", "Healthcare", "Government", "Education", "Treatment courts", "Kansas City"];
+// Checkbox list for the Find form: the TOPIC_MAP families first, then any episode tag with 3 or more episodes
+// that no family covers, by episode count. An uncovered tag maps to itself in the matcher.
+const TOPIC_MIN = 3;
+function buildTopics() {
+  const covered = new Set(Object.values(TOPIC_MAP).flat());
+  const counts = {};
+  EPISODES.forEach(e => e.topics.forEach(t => { if (!covered.has(t)) counts[t] = (counts[t] || 0) + 1; }));
+  const extra = Object.keys(counts).filter(t => counts[t] >= TOPIC_MIN && !(t in TOPIC_MAP)).sort((a, b) => counts[b] - counts[a] || a.localeCompare(b));
+  return Object.keys(TOPIC_MAP).concat(extra);
+}
 const TOPIC_MAP = {
   "Entrepreneurship": ["Side business", "Franchising", "Startups", "Product", "Leaving corporate", "Wealth building", "Entrepreneurship", "Founder stories", "Founder mindset", "Founder advice", "Founder lessons", "Small business", "Immigrant founders", "Women founders", "Black entrepreneurship", "Scaling", "Building in public", "Resilience"],
   "Investing": ["Investing", "Index funds", "Real estate", "Wealth building", "Financing", "Venture capital", "Raising capital", "Startup funding", "Impact investing", "Capital", "Angel investing"],
   "Real estate": ["Real estate", "Affordable housing", "Urban development", "Community development", "Gentrification", "Sustainable building"],
   "Leadership": ["Leadership", "Company culture", "Communication", "Creative leadership", "Corporate innovation", "Corporate responsibility", "Mentorship", "Decision making", "Women in leadership", "Civic leadership"],
-  "Hiring": ["Hiring", "Company culture", "Workforce", "Talent", "Gen Z", "Diversity and inclusion"],
-  "AI": ["AI", "AI in courts", "Technology", "Court data", "AI infrastructure", "Data centers", "Robotics", "Future of work", "Emerging tech", "Data analytics"],
+  "Hiring": ["Hiring", "Company culture", "Workforce", "Talent", "Gen Z", "Diversity and inclusion", "Black professionals", "Workplace", "Representation", "Diversity", "Equity", "Gender equity", "Women in tech"],
+  "AI": ["AI", "AI in courts", "Technology", "Court data", "AI infrastructure", "Data centers", "Robotics", "Future of work", "Emerging tech", "Data analytics", "Data visualization", "Business analytics", "Data privacy", "Blockchain", "Web3", "VR", "Digital divide", "Digital equity", "Technology access"],
   "Startups": ["Startups", "Product", "CoFoundry", "Side business", "Startup ecosystem", "Ecosystem building", "Innovation economy", "Accelerators", "Startup programs", "Social Venture Studio", "Founder stories"],
   "Community": ["Community", "Community development", "Black community", "Food access", "Social Venture Studio", "Creative economy", "Music", "Arts", "Collaboration", "Nonprofits"],
   "Social impact": ["Social impact", "Social entrepreneurship", "Social enterprise", "Social Venture Studio", "Affordable housing", "Homelessness", "Food access", "Mental health access", "Disability", "Accessibility", "Justice reform", "Impact investing"],
@@ -75,8 +96,10 @@ const TOPIC_MAP = {
   "Government": ["Government", "Civic tech", "Civic innovation", "Smart cities", "GovTech", "Democracy", "Policy", "Entrepreneurship policy", "National security", "Missouri"],
   "Education": ["Education", "Tech education", "STEM education", "Youth", "Workforce", "Music", "Design thinking", "Research commercialization"],
   "Treatment courts": ["Treatment courts", "Recidivism", "Court funding", "Participants", "Families", "Court process", "Justice reform", "Court data", "Crime prevention", "Mass incarceration"],
-  "Kansas City": ["Kansas City", "Johnson County", "CoFoundry", "Logistics", "Economic development", "Sports", "Midwest"]
+  "Marketing": ["Marketing", "Brand", "B2B marketing", "Influencer marketing", "Social media", "TikTok", "Digital marketing", "Content", "Creative leadership"],
+  "Kansas City": ["Kansas City", "Johnson County", "CoFoundry", "Logistics", "Economic development", "Sports", "Midwest", "Women in sports", "Supply chain", "Logistics"]
 };
+const TOPICS = buildTopics();
 let prefs = { topics: [], time: "any", format: "any", show: "any", free: "" };
 
 function score(e) {
