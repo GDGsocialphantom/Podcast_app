@@ -1,4 +1,4 @@
-// Admin editor: forms for episodes and shows that GENERATE the object to paste into data/.
+// Admin editor: forms for episodes and shows that GENERATE the object to paste into data/, plus the transcript file for data/transcripts/.
 // Nothing here writes to the repo or to any backend. See claude/known-issues.md, "Where does the admin editor save?"
 // Drafts are kept in localStorage (per browser) so a half-finished form survives a reload.
 //
@@ -45,7 +45,6 @@ async function copyText(text, btn) {
 /* ---------- serializers: match the style of data/episodes.js and data/shows.js ---------- */
 function episodeSource(e) {
   const people = e.people.map(p => `{ n: ${q(p.n)}, r: ${q(p.r)} }`).join(", ");
-  const cues = e.transcript.map(c => `      { t: ${c.t}, s: ${q(c.s)}, x: ${q(c.x)} }`).join(",\n");
   const chapters = e.notes.chapters.map(([t, n]) => `[${t}, ${q(n)}]`).join(", ");
   const links = e.notes.links.map(([n, u]) => `[${q(n)}, ${q(u)}]`).join(", ");
   return `  { id: ${q(e.id)}, show: ${q(e.show)}, format: ${q(e.format)}, date: ${q(e.date)}, duration: ${e.duration},
@@ -54,12 +53,14 @@ function episodeSource(e) {
     topics: [${e.topics.map(q).join(", ")}],
     people: [${people}],
     youtube: ${q(e.youtube)},
-    transcript: [${cues ? "\n" + cues + "\n    " : ""}],
     notes: {
       takeaways: [${e.notes.takeaways.map(q).join(", ")}],
       chapters: [${chapters}],
       links: [${links}]
     } },`;
+}
+function transcriptSource(e) {  // data/transcripts/<id>.json
+  return "[\n" + e.transcript.map(c => `  { "t": ${c.t}, "s": ${q(c.s)}, "x": ${q(c.x)} }`).join(",\n") + "\n]\n";
 }
 function showSource(s) {
   return `  { id: ${q(s.id)}, name: ${q(s.name)}, color: ${q(s.color)}, ink: ${q(s.ink || "#FFFFFF")}, logo: ${q(s.logo || "assets/shows/" + s.id + ".png")}, org: ${q(s.org)},
@@ -134,7 +135,7 @@ function episodeFormValues(seed) {
     duration: e.duration || "", title: e.title || "", summary: e.summary || "",
     topics: (e.topics || []).join(", "), youtube: e.youtube || "",
     people: (e.people || []).map(p => `${p.n} | ${p.r}`).join("\n"),
-    transcript: e.transcript && e.transcript.length ? JSON.stringify(e.transcript, null, 2) : "",
+    transcript: "",   // filled from data/transcripts/<id>.json when editing (see renderEpisodeEditor)
     takeaways: (n.takeaways || []).join("\n"),
     chapters: (n.chapters || []).map(([t, x]) => `${ts(t)} ${x}`).join("\n"),
     links: (n.links || []).map(([x, u]) => `${x} | ${u}`).join("\n")
@@ -187,7 +188,7 @@ function renderEpisodeEditor(id) {
       ${field("topics", "Topics", input("topics", v.topics), "comma separated")}
       ${field("people", "People", area("people", v.people, 3, "Craig Moore II | Host\nMarcus Bell | Guest, franchise owner"), "one per line: Name | Role")}
       <details ${v.transcript || v.takeaways || v.chapters || v.links ? "open" : ""}><summary>Transcript and show notes</summary>
-        ${field("transcript", "Transcript", area("transcript", v.transcript, 6, '[{ "t": 0, "s": "Speaker", "x": "..." }]'), "paste the JSON from tools/transcribe.py (the cue array or the whole file)")}
+        ${field("transcript", "Transcript", area("transcript", v.transcript, 6, '[{ "t": 0, "s": "Speaker", "x": "..." }]'), "paste the JSON from tools/fetch-captions.js or tools/transcribe.py (the cue array or the whole file); it comes out as its own file below")}
         ${field("takeaways", "Takeaways", area("takeaways", v.takeaways, 3), "one per line")}
         ${field("chapters", "Chapters", area("chapters", v.chapters, 3, "00:00 Intro\n12:34 The middle part"), "one per line: time then title")}
         ${field("links", "Links", area("links", v.links, 2, "Magis | https://www.magis.ai"), "one per line: Label | URL")}
@@ -200,10 +201,19 @@ function renderEpisodeEditor(id) {
         <ul class="problems" id="ep-problems"></ul>
         <p class="admin-where" id="ep-where"></p>
         <pre id="ep-code"></pre></div>
+      <div class="card admin-code" id="tx-out" hidden><div class="admin-code-head"><p class="eyebrow" id="tx-where">Save as data/transcripts/</p><button type="button" class="btn small" id="tx-copy">Copy</button></div>
+        <pre id="tx-code"></pre></div>
     </div></div>`
   });
 
   const form = document.getElementById("ep-form"), code = document.getElementById("ep-code"), probs = document.getElementById("ep-problems"), where = document.getElementById("ep-where"), prev = document.getElementById("ep-preview");
+  const txOut = document.getElementById("tx-out"), txWhere = document.getElementById("tx-where"), txCode = document.getElementById("tx-code");
+  document.getElementById("tx-copy").onclick = ev => copyText(txCode.textContent, ev.currentTarget);
+  if (existing && !v.transcript && location.protocol !== "file:") {   // pull the existing transcript file into the form once
+    fetch(`data/transcripts/${encodeURIComponent(existing.id)}.json`).then(r => r.ok ? r.json() : null).then(cues => {
+      if (Array.isArray(cues) && cues.length && !form.transcript.value.trim()) { form.transcript.value = JSON.stringify(cues, null, 2); update(); }
+    }).catch(() => {});
+  }
   const values = () => Object.fromEntries(new FormData(form).entries());
   let lastShow = v.show;
   function update() {
@@ -227,6 +237,8 @@ function renderEpisodeEditor(id) {
       ? `Replace the object with id "${id}" in data/episodes.js with this.`
       : `Add this right after "const EPISODES = [" at the top of data/episodes.js.`;
     code.textContent = episodeSource(e);
+    txOut.hidden = !e.transcript.length;
+    if (e.transcript.length) { txWhere.textContent = `Save as data/transcripts/${e.id || "<episode id>"}.json`; txCode.textContent = transcriptSource(e); }
     try { prev.innerHTML = showById(e.show) ? episodeRow({ ...e, title: e.title || "Untitled episode", summary: e.summary || "", topics: e.topics, people: e.people.filter(p => p.n) }) : ""; } catch (err) { prev.innerHTML = ""; }
     prev.querySelectorAll("a").forEach(a => a.removeAttribute("href"));
   }

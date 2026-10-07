@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Validates data/shows.js and data/episodes.js before they hit the site.
+// Validates data/shows.js, data/episodes.js and data/transcripts/*.json before they hit the site.
 // Run: node tools/check-data.js   (exit code 1 on any problem)
 const fs = require("fs");
 const path = require("path");
@@ -58,13 +58,7 @@ for (const e of EPISODES || []) {
   for (const p of e.people || []) if (!p.n || !p.r) bad(id, "each person needs n (name) and r (role)");
   if (!e.youtube || !/^[\w-]{11}$/.test(e.youtube)) bad(id, "youtube should be an 11-character video id");
   if (e.youtube === SAMPLE_YT) console.warn(`warning ${id}: still using the sample YouTube id`);
-  if (!Array.isArray(e.transcript)) bad(id, "transcript should be an array (empty is fine)");
-  let last = -1;
-  for (const c of e.transcript || []) {
-    if (typeof c.t !== "number" || !c.s || !c.x) bad(id, "transcript cues need t (seconds), s (speaker), x (text)");
-    if (typeof c.t === "number" && c.t < last) bad(id, `transcript cue at ${c.t}s is out of order`);
-    last = c.t;
-  }
+  if ("transcript" in e) bad(id, "transcripts no longer live in episodes.js; move it to data/transcripts/" + e.id + ".json");
   if (e.notes) {
     if (!Array.isArray(e.notes.takeaways)) bad(id, "notes.takeaways should be an array");
     if (!Array.isArray(e.notes.chapters)) bad(id, "notes.chapters should be an array");
@@ -73,9 +67,29 @@ for (const e of EPISODES || []) {
   }
 }
 
+// data/transcripts/<episode id>.json: one file per episode, an array of cues { t: seconds, s: speaker, x: text }
+const txDir = path.join(root, "data", "transcripts");
+let txCount = 0;
+if (fs.existsSync(txDir)) {
+  for (const f of fs.readdirSync(txDir).filter(f => f.endsWith(".json")).sort()) {
+    const id = f.slice(0, -5), label = "transcripts/" + f;
+    let cues;
+    try { cues = JSON.parse(fs.readFileSync(path.join(txDir, f), "utf8")); } catch (e) { bad(label, "does not parse as JSON: " + e.message); continue; }
+    if (!epIds.has(id)) console.warn(`warning ${label}: no episode with id "${id}"`);
+    if (!Array.isArray(cues)) { bad(label, "should be an array of cues"); continue; }
+    let last = -1;
+    for (const c of cues) {
+      if (!c || typeof c.t !== "number" || typeof c.s !== "string" || typeof c.x !== "string" || !c.s || !c.x) { bad(label, "cues need numeric t (seconds), string s (speaker) and x (text)"); break; }
+      if (c.t < last) { bad(label, `cue at ${c.t}s is out of order`); break; }
+      last = c.t;
+    }
+    txCount++;
+  }
+}
+
 if (problems.length) {
   console.error(problems.join("\n"));
   console.error(`\n${problems.length} problem${problems.length === 1 ? "" : "s"} found.`);
   process.exit(1);
 }
-console.log(`OK: ${SHOWS.length} shows, ${EPISODES.length} episodes.`);
+console.log(`OK: ${SHOWS.length} shows, ${EPISODES.length} episodes, ${txCount} transcripts.`);
