@@ -22,8 +22,8 @@ function showLogo(s, cls = "") {
 function personHTML(p, show) {
   return `<div class="p"><span class="avatar" style="${showVars(show)}">${esc(initials(p.n))}</span><span>${esc(p.n)}<small>${esc(p.r)}</small></span></div>`;
 }
-function episodeRow(e, extra = "") {
-  const s = showById(e.show);
+function episodeRow(e, extra = "", show = null) {
+  const s = show || showById(e.show);  // the admin editor passes a draft show to preview branding
   return `<a class="ep" href="#${e.id}" style="${showVars(s)}">
     <span class="stripe"></span>
     <span class="ep-thumb"><img src="https://i.ytimg.com/vi/${esc(e.youtube)}/mqdefault.jpg" alt="" loading="lazy" onerror="this.remove()"></span>
