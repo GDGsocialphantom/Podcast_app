@@ -12,14 +12,15 @@ data/shows.js         the four shows
 data/episodes.js      every episode, with show notes
 data/transcripts/     one <episode id>.json per episode (array of { t, s, x } cues); loaded only on the episode page
 auth/                 login, sessions, admin role and the user store (see auth/README.md)
-tools/fetch-captions.js  pulls YouTube auto-captions into data/transcripts/ (rough: no punctuation or speaker names)
+tools/fetch-transcripts.js  pulls transcripts from YouTubeTranscript.dev into data/transcripts/ (runs on GitHub; needs the API key)
+data/transcript-status.json  what the fetcher did per episode: ok, no captions, credits exhausted or error, plus credits used
 tools/transcribe.py   turns an episode's audio into a clean transcript JSON
 tools/check-data.js   validates the data files and every transcript; runs on every push via GitHub Actions
 ```
 
 Where to look when something breaks:
 - Page is blank or an episode is missing: `data/` and `node tools/check-data.js`
-- Transcript says "coming soon" on an episode that should have one: check `data/transcripts/<episode id>.json` exists and the browser console for a 404
+- Transcript says "coming soon" on an episode that should have one: check Admin > Transcripts (or `data/transcript-status.json`); "No transcript available" means the video has no captions or credits ran out
 - Layout or styling: `css/site.css`
 - Login, log out, admin bar, edit buttons: `auth/`
 - Add episode / Edit show forms: `js/admin.js`
@@ -27,7 +28,7 @@ Where to look when something breaks:
 
 ## Add an episode
 1. Log in as admin and open Add episode. Fill in the form; it generates the episode object and checks it as you type. Copy the output and paste it at the top of the `EPISODES` array in `data/episodes.js`. (Or copy any episode object in the file by hand.)
-2. Transcript: run `node tools/fetch-captions.js <episode id>` once the YouTube video is up; it writes `data/transcripts/<episode id>.json` from the auto-captions. For a clean transcript, run `python tools/transcribe.py episode.mp3 --notes` (needs `OPENAI_API_KEY`, `pip install openai`) and paste the output into the form's Transcript field; the form outputs the transcript file separately.
+2. Transcript: nothing to do by hand. When the commit lands on `main`, the Transcripts workflow fetches `data/transcripts/<episode id>.json` from YouTubeTranscript.dev and commits it (the key is a repo secret, `YOUTUBETRANSCRIPT_API_KEY`; episodes that already have a file are never refetched). Admin > Transcripts shows the status per episode. For a clean transcript, run `python tools/transcribe.py episode.mp3 --notes` (needs `OPENAI_API_KEY`, `pip install openai`) and paste the output into the form's Transcript field; the form outputs the transcript file separately.
 3. Run `node tools/check-data.js`. It catches missing fields, bad dates, unknown show ids and bad transcript files.
 4. Commit to `main`. GitHub Pages redeploys in about a minute.
 

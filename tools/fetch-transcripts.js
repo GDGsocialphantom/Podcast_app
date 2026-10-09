@@ -32,8 +32,7 @@ for (const f of ["data/shows.js", "data/episodes.js"]) vm.runInContext(fs.readFi
 const { SHOWS, EPISODES } = vm.runInContext("({ SHOWS, EPISODES })", ctx);
 const hostOf = e => { const s = SHOWS.find(x => x.id === e.show); return s && s.hosts && s.hosts[0] ? s.hosts[0] : "Host"; };
 
-const CUE_SECONDS = 40;       // target cue length; cues end between 30 and 45 seconds
-const CUE_MIN = 30, CUE_MAX = 45;
+const CUE_MIN = 30, CUE_MAX = 45;   // a cue ends at the first sentence end after 30 seconds, or at 45 seconds
 const BATCH = 10;             // free plan: batches of 10
 const GAP_MS = 1100;          // free plan: 1 request per second
 const sleep = ms => new Promise(r => setTimeout(r, ms));
@@ -61,15 +60,14 @@ function toSeconds(segments, e) {
 function merge(segments, e, speaker) {
   const { ms, secs } = toSeconds(segments, e);
   const cues = [];
-  let cur = null, curEnd = 0;
+  let cur = null;
   for (const seg of segments) {
     const text = String(seg.text || "").replace(/\s+/g, " ").trim();
     if (!text) continue;
     const start = secs(seg.start), end = secs(seg.end != null ? seg.end : seg.start);
-    const len = cur ? end - cur.t : 0;
+    const len = cur ? start - cur.t : 0;   // length the cue would have if this segment started a new one
     if (!cur || len >= CUE_MAX || (len >= CUE_MIN && /[.!?]$/.test(cur.x))) { if (cur) cues.push(cur); cur = { t: Math.floor(start), s: speaker, x: text }; }
     else cur.x += " " + text;
-    curEnd = end;
   }
   if (cur) cues.push(cur);
   return { cues, unit: ms ? "ms" : "s" };

@@ -1,5 +1,5 @@
 // Episodes. Copy any object to add one; the site sorts by date. Shows with no episodes yet still appear in the sidebar and show list.
-// Transcripts live in data/transcripts/<episode id>.json (see tools/fetch-captions.js and tools/transcribe.py). Run `node tools/check-data.js` before committing.
+// Transcripts live in data/transcripts/<episode id>.json (fetched by tools/fetch-transcripts.js on GitHub; tools/transcribe.py for clean ones). Run `node tools/check-data.js` before committing.
 const EPISODES = [
   /* ---- The Disruption Lab (172 episodes from youtube.com/@thedisruptionlabpodcast, pulled 2026-10-01). Takeaways not yet added. ---- */
   { id: "dl-RIMeKTnjecY", show: "disruption", format: "Interview", date: "2026-09-25", duration: 56,

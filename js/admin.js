@@ -190,7 +190,7 @@ function renderEpisodeEditor(id) {
       ${field("topics", "Topics", input("topics", v.topics), "comma separated")}
       ${field("people", "People", area("people", v.people, 3, "Craig Moore II | Host\nMarcus Bell | Guest, franchise owner"), "one per line: Name | Role")}
       <details ${v.transcript || v.takeaways || v.chapters || v.links ? "open" : ""}><summary>Transcript and show notes</summary>
-        ${field("transcript", "Transcript", area("transcript", v.transcript, 6, '[{ "t": 0, "s": "Speaker", "x": "..." }]'), "paste the JSON from tools/fetch-captions.js or tools/transcribe.py (the cue array or the whole file); it comes out as its own file below")}
+        ${field("transcript", "Transcript", area("transcript", v.transcript, 6, '[{ "t": 0, "s": "Speaker", "x": "..." }]'), "paste the JSON from tools/transcribe.py (the cue array or the whole file); it comes out as its own file below")}
         ${field("takeaways", "Takeaways", area("takeaways", v.takeaways, 3), "one per line")}
         ${field("chapters", "Chapters", area("chapters", v.chapters, 3, "00:00 Intro\n12:34 The middle part"), "one per line: time then title")}
         ${field("links", "Links", area("links", v.links, 2, "Magis | https://www.magis.ai"), "one per line: Label | URL")}
