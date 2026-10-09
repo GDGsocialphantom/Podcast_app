@@ -1,0 +1,51 @@
+name: Transcripts
+
+# Fetches transcripts from YouTubeTranscript.dev for every episode that has no file in data/transcripts/.
+# Runs when data/episodes.js changes on main, or by hand (Actions > Transcripts > Run workflow) against the branch you pick.
+# Existing files are never refetched, so a page view or a later run never spends credits twice.
+on:
+  push:
+    branches: [main]
+    paths: ["data/episodes.js"]
+  workflow_dispatch:
+    inputs:
+      episode:
+        description: "Episode id (blank = every episode without a transcript)"
+        required: false
+        default: ""
+
+permissions:
+  contents: write
+
+concurrency:
+  group: transcripts
+  cancel-in-progress: false
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Fetch transcripts
+        env:
+          YOUTUBETRANSCRIPT_API_KEY: ${{ secrets.YOUTUBETRANSCRIPT_API_KEY }}
+        run: |
+          node tools/fetch-transcripts.js ${{ github.event.inputs.episode }} | tee fetch.log
+          grep -E '^Done:' fetch.log | sed 's/^/::notice title=Transcripts::/'
+          { echo '### Transcripts'; echo; echo '```'; cat fetch.log; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+      - run: node tools/check-data.js
+      - name: Commit transcripts
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/transcripts data/transcript-status.json
+          if git diff --cached --quiet; then echo "No transcript changes."; exit 0; fi
+          SUMMARY=$(grep -m1 '^Done:' fetch.log || echo "Fetch transcripts")
+          git commit -m "Add transcripts from YouTubeTranscript.dev" -m "$SUMMARY"
+          git pull --rebase origin ${{ github.ref_name }}
+          git push origin HEAD:${{ github.ref_name }}
