@@ -1,7 +1,7 @@
 name: Transcripts
 
 # Fetches transcripts from YouTubeTranscript.dev for every episode that has no file in data/transcripts/.
-# Runs when data/episodes.js changes on main, or by hand (Actions > Transcripts > Run workflow).
+# Runs when data/episodes.js changes on main, or by hand (Actions > Transcripts > Run workflow) against the branch you pick.
 # Existing files are never refetched, so a page view or a later run never spends credits twice.
 on:
   push:
@@ -27,7 +27,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: main
+          ref: ${{ github.ref_name }}
       - uses: actions/setup-node@v4
         with:
           node-version: 20
@@ -47,5 +47,5 @@ jobs:
           if git diff --cached --quiet; then echo "No transcript changes."; exit 0; fi
           SUMMARY=$(grep -m1 '^Done:' fetch.log || echo "Fetch transcripts")
           git commit -m "Add transcripts from YouTubeTranscript.dev" -m "$SUMMARY"
-          git pull --rebase origin main
-          git push origin HEAD:main
+          git pull --rebase origin ${{ github.ref_name }}
+          git push origin HEAD:${{ github.ref_name }}
