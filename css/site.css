@@ -167,11 +167,12 @@ textarea:focus, input:focus { outline: 2px solid var(--primary); outline-offset:
 .tx-head h2 { font-size: 18px; }
 .tx-search { border: 1px solid var(--line); background: var(--surface); color: var(--ink); font: inherit; font-size: 13.5px; padding: 8px 12px; border-radius: 6px; width: 240px; max-width: 100%; }
 .tx { display: grid; gap: 0; border-top: 1px solid var(--line); }
-.cue { display: grid; grid-template-columns: 60px 120px 1fr; gap: 14px; padding: 12px 0; border-bottom: 1px solid var(--line); font-size: 14.5px; }
-.cue .t { font-size: 12px; font-variant-numeric: tabular-nums; color: var(--muted); padding-top: 3px; text-decoration: none; font-weight: 500; }
+.cue { display: grid; grid-template-columns: 60px 1fr; gap: 4px 14px; padding: 14px 0; border-bottom: 1px solid var(--line); font-size: 15px; line-height: 1.6; }
+.cue .sp { grid-column: 2; font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.cue p { grid-column: 2; margin: 0; }
+.cue .t { grid-row: 1 / span 2; font-size: 12px; font-variant-numeric: tabular-nums; color: var(--muted); padding-top: 3px; text-decoration: none; font-weight: 500; }
 .cue .t:hover { color: var(--primary-ink); }
-.cue .sp { font-weight: 600; font-size: 13px; padding-top: 2px; }
-.cue p { margin: 0; max-width: 68ch; }
+.cue p { max-width: 70ch; }
 .cue mark { background: var(--accent); color: var(--accent-ink); padding: 0 2px; border-radius: 2px; }
 .tx-empty { color: var(--muted); padding: 20px 0; }
 aside.notes { position: sticky; top: 20px; display: grid; gap: 20px; padding: 22px 22px; }

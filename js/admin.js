@@ -421,10 +421,35 @@ function renderShowsAdmin() {
   });
 }
 
+/* ---------- transcripts status (read only) ---------- */
+// Transcripts are fetched on GitHub by tools/fetch-transcripts.js whenever data/episodes.js changes on main.
+// This page only reads data/transcript-status.json; nothing here calls the transcript API.
+function renderTranscriptsAdmin() {
+  adminShell({
+    title: "Transcripts",
+    sub: `Fetching runs on GitHub (the Transcripts workflow) when <code>data/episodes.js</code> changes on main, or from the Run workflow button. Nothing on this page calls the API. Episodes that already have a file are never fetched again.`,
+    form: `<div class="admin-stats" id="tx-stats"><span class="eyebrow">Loading status…</span></div><div class="card admin-table"><table id="tx-table"><thead><tr><th>Episode</th><th>Status</th><th>Checked</th><th>Credits</th></tr></thead><tbody></tbody></table></div>`
+  });
+  const stats = document.getElementById("tx-stats"), body = document.querySelector("#tx-table tbody");
+  const label = { ok: "ok", no_captions: "no captions", credits_exhausted: "credits exhausted", error: "error" };
+  const fmt = iso => iso ? new Date(iso).toLocaleString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" }) : "";
+  (location.protocol === "file:" ? Promise.resolve(null) : transcriptStatus()).then(st => {
+    const eps = (st && st.episodes) || {};
+    const rows = sorted().map(e => ({ e, s: eps[e.id] }));
+    const count = k => rows.filter(r => r.s && r.s.status === k).length;
+    const notFetched = rows.filter(r => !r.s).length;
+    stats.innerHTML = [["ok", count("ok")], ["no captions", count("no_captions")], ["errors", count("error") + count("credits_exhausted")], ["not fetched", notFetched], ["credits used", st ? st.credits_used_total || 0 : 0]]
+      .map(([k, v]) => `<div class="stat card"><b>${v}</b><span>${esc(k)}</span></div>`).join("") + `<p class="admin-where">${st && st.last_run ? "Last run " + esc(fmt(st.last_run)) : "No run recorded yet; data/transcript-status.json is missing or empty."}</p>`;
+    body.innerHTML = rows.map(({ e, s }) => `<tr class="${s ? "st-" + esc(s.status) : "st-none"}"><td><a href="#${e.id}">${esc(e.title)}</a><small>${esc(e.id)} · ${fmtDate(e.date)}</small></td><td>${s ? esc(label[s.status] || s.status) : "not fetched"}</td><td>${s ? esc(fmt(s.checked)) : ""}</td><td>${s ? s.credits_used : ""}</td></tr>`).join("");
+  });
+  setNav(null);
+}
+
 /* ---------- entry point ---------- */
 function renderAdmin(kind, id) {
   if (!isAdmin()) return renderLogin(location.hash);
   if (kind === "episode") return renderEpisodeEditor(id);
   if (kind === "show") return renderShowEditor(id);
+  if (kind === "transcripts") return renderTranscriptsAdmin();
   return renderShowsAdmin();
 }
