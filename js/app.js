@@ -184,7 +184,7 @@ function renderEpisode(e) {
     ? `<iframe src="https://www.youtube-nocookie.com/embed/${e.youtube}" title="${esc(e.title)}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`
     : `<a class="video" href="${yt(e.youtube)}" target="_blank" rel="noopener" style="${showVars(s)}"><img class="thumb" src="${ytThumb(e.youtube)}" alt="" onerror="if(!this.dataset.hq){this.dataset.hq=1;this.src='https://i.ytimg.com/vi/${e.youtube}/hqdefault.jpg'}else{this.remove()}"><span class="pb"><svg width="32" height="32" viewBox="0 0 24 24" fill="#0F2F33"><path d="M8 5v14l11-7z"/></svg></span><span class="cap">Watch on YouTube · ${fmtDur(e.duration)}</span></a>`;
   const n = e.notes || {}, has = a => Array.isArray(a) && a.length > 0; // notes and each section are optional (see tools/check-data.js)
-  const cueHTML = c => `<div class="cue" data-text="${esc(c.x.toLowerCase())}"><a class="t" href="${yt(e.youtube, c.t)}" target="_blank" rel="noopener">${ts(c.t)}</a><span class="sp">${esc(c.s)}</span><p>${esc(c.x)}</p></div>`;
+  const cueHTML = c => `<div class="cue" data-text="${esc(c.x.toLowerCase())}"><a class="t" href="${yt(e.youtube, c.t)}" target="_blank" rel="noopener" title="Open the video at ${ts(c.t)}">${ts(c.t)}</a><span class="sp">${esc(c.s)}</span><p>${esc(c.x)}</p></div>`;
   app.innerHTML = `
   <section class="ep-hero" style="${showVars(s)}"><a class="back" href="#home">← All episodes</a>
     <p class="eyebrow showtag"><a href="#show-${s.id}">${showLogo(s, "xs")}${esc(s.name)}</a></p>
@@ -212,14 +212,25 @@ function renderEpisode(e) {
     });
   };
   // Transcripts live in data/transcripts/<id>.json and load after the page renders. No file, a 404 or a blocked fetch (file://) leaves the placeholder.
+  // Transcripts are fetched on GitHub by tools/fetch-transcripts.js, never from the browser. data/transcript-status.json
+  // says which episodes have been checked and found to have no captions, so the page can say so instead of "coming soon".
   const txUrl = `data/transcripts/${encodeURIComponent(e.id)}.json`;
   if (location.protocol !== "file:") fetch(txUrl).then(r => r.ok ? r.json() : null).then(cues => {
-    if (!Array.isArray(cues) || !cues.length || location.hash.slice(1) !== e.id) return; // user already navigated away
-    tx.innerHTML = cues.map(cueHTML).join("");
-    if (search.value) search.oninput();
+    if (location.hash.slice(1) !== e.id) return; // user already navigated away
+    if (Array.isArray(cues) && cues.length) { tx.innerHTML = cues.map(cueHTML).join(""); if (search.value) search.oninput(); return; }
+    return transcriptStatus().then(st => {
+      const mine = st && st.episodes && st.episodes[e.id];
+      if (mine && (mine.status === "no_captions" || mine.status === "credits_exhausted") && location.hash.slice(1) === e.id) tx.innerHTML = `<p class="tx-empty">No transcript available for this episode.</p>`;
+    });
   }).catch(err => console.warn("transcript: could not load " + txUrl, err));
   setNav(null);
   window.scrollTo({ top: 0 });
+}
+
+let txStatusCache = null;
+function transcriptStatus() {   // data/transcript-status.json, fetched once per page load
+  if (!txStatusCache) txStatusCache = fetch("data/transcript-status.json").then(r => r.ok ? r.json() : null).catch(() => null);
+  return txStatusCache;
 }
 
 /* ---------- router ---------- */
@@ -231,6 +242,7 @@ function route() {
   if (h === "admin-new-episode") return renderAdmin("episode");
   if (h === "admin-shows") return renderAdmin("shows");
   if (h === "admin-new-show") return renderAdmin("show");
+  if (h === "admin-transcripts") return renderAdmin("transcripts");
   if (h.startsWith("admin-edit-show-")) return renderAdmin("show", h.slice(16));
   if (h.startsWith("admin-edit-")) return renderAdmin("episode", h.slice(11));
   if (h === "home" || h === "") return renderHome();
