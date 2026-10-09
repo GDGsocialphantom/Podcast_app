@@ -86,6 +86,8 @@ function validateEpisode(e, editingId) {
   if (!e.topics.length) p.push("Add at least one topic.");
   if (!e.people.length) p.push("Add at least one person.");
   if (e.people.some(x => !x.n || !x.r)) p.push("Each person needs a name and a role: Name | Role.");
+  const single = e.people.filter(x => x.n && !/\s/.test(x.n.trim())).map(x => x.n);
+  if (single.length) p.push(`Heads up: ${single.join(", ")} ${single.length === 1 ? "has" : "have"} no last name. Add it, or keep the first name and mark the people line with // TODO full name after pasting.`);
   if (!/^[\w-]{11}$/.test(e.youtube)) p.push("YouTube should be an 11-character video id or a YouTube URL.");
   if (e.transcriptError) p.push("Transcript: " + e.transcriptError);
   let last = -1;
