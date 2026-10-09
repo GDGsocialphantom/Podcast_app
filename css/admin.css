@@ -56,3 +56,19 @@
 .brand-preview .ep { grid-template-columns: 4px 1fr; gap: 6px 16px; pointer-events: none; }
 .brand-preview .ep .stripe { grid-row: 1 / span 2; }
 .brand-preview .ep .ep-thumb, .brand-preview .ep .people { display: none; }
+
+/* transcripts status page */
+.admin-stats { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-bottom: 16px; }
+.admin-stats .stat { padding: 12px 18px; display: grid; gap: 2px; min-width: 110px; }
+.admin-stats .stat b { font-size: 22px; font-weight: 700; }
+.admin-stats .stat span { font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.admin-stats .admin-where { flex-basis: 100%; }
+.admin-table { padding: 4px 16px; overflow-x: auto; }
+.admin-table table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+.admin-table th { text-align: left; font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); padding: 10px 8px; border-bottom: 1px solid var(--line); }
+.admin-table td { padding: 9px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+.admin-table td a { color: var(--ink); text-decoration: none; font-weight: 500; }
+.admin-table td small { display: block; color: var(--muted); font-size: 12px; }
+.admin-table tr.st-ok td:nth-child(2) { color: #15803D; }
+.admin-table tr.st-no_captions td:nth-child(2), .admin-table tr.st-credits_exhausted td:nth-child(2), .admin-table tr.st-error td:nth-child(2) { color: #B91C1C; }
+.admin-table tr.st-none td:nth-child(2) { color: var(--muted); }

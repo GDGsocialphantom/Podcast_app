@@ -95,6 +95,29 @@ if (fs.existsSync(txDir)) {
   }
 }
 
+// data/transcript-status.json: written by tools/fetch-transcripts.js
+const statusPath = path.join(root, "data", "transcript-status.json");
+const txFiles = fs.existsSync(txDir) ? fs.readdirSync(txDir).filter(f => f.endsWith(".json")).map(f => f.slice(0, -5)) : [];
+if (fs.existsSync(statusPath)) {
+  let st = null;
+  try { st = JSON.parse(fs.readFileSync(statusPath, "utf8")); } catch (e) { bad("transcript-status.json", "does not parse as JSON: " + e.message); }
+  if (st) {
+    if (typeof st !== "object" || typeof st.episodes !== "object") bad("transcript-status.json", "needs an episodes object");
+    if (st.last_run && isNaN(Date.parse(st.last_run))) bad("transcript-status.json", "last_run is not a date");
+    if (typeof st.credits_used_total !== "number") bad("transcript-status.json", "credits_used_total should be a number");
+    for (const [id, v] of Object.entries(st.episodes || {})) {
+      if (!v || !["ok", "no_captions", "credits_exhausted", "error"].includes(v.status)) bad("transcript-status.json", `${id}: status should be ok, no_captions, credits_exhausted or error`);
+      if (!v || isNaN(Date.parse(v.checked))) bad("transcript-status.json", `${id}: checked should be a date`);
+      if (!v || typeof v.credits_used !== "number") bad("transcript-status.json", `${id}: credits_used should be a number`);
+      if (!epIds.has(id)) console.warn(`warning transcript-status.json: no episode with id "${id}"`);
+      if (v && v.status === "ok" && !txFiles.includes(id)) console.warn(`warning transcript-status.json: ${id} is marked ok but has no transcript file`);
+    }
+    for (const id of txFiles) if (!st.episodes[id]) console.warn(`warning transcripts/${id}.json: no entry in transcript-status.json`);
+  }
+} else if (txFiles.length) {
+  console.warn(`warning: ${txFiles.length} transcript file(s) but no data/transcript-status.json`);
+}
+
 if (problems.length) {
   console.error(problems.join("\n"));
   console.error(`\n${problems.length} problem${problems.length === 1 ? "" : "s"} found.`);
