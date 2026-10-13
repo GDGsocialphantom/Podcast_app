@@ -1,5 +1,5 @@
 {
-  "last_run": "2026-10-13T17:09:14.108Z",
+  "last_run": "2026-10-13T17:15:12.609Z",
   "credits_used_total": 1,
   "episodes": {
     "dl-iFsQtIyEXys": {
@@ -10,6 +10,51 @@
     "dl-tQrCxfZMZPM": {
       "status": "ok",
       "checked": "2026-10-13T17:09:13.008Z",
+      "credits_used": 0
+    },
+    "dl-RIMeKTnjecY": {
+      "status": "ok",
+      "checked": "2026-10-13T17:14:59.129Z",
+      "credits_used": 0
+    },
+    "dl-0mdVTfLbx3s": {
+      "status": "ok",
+      "checked": "2026-10-13T17:15:00.725Z",
+      "credits_used": 0
+    },
+    "dl-D_FttoQbpSs": {
+      "status": "ok",
+      "checked": "2026-10-13T17:15:02.408Z",
+      "credits_used": 0
+    },
+    "dl-eW4wV3-0h4I": {
+      "status": "ok",
+      "checked": "2026-10-13T17:15:04.086Z",
+      "credits_used": 0
+    },
+    "dl-DsC7xm__BlY": {
+      "status": "ok",
+      "checked": "2026-10-13T17:15:05.682Z",
+      "credits_used": 0
+    },
+    "dl-rGu6wewxC3I": {
+      "status": "ok",
+      "checked": "2026-10-13T17:15:07.313Z",
+      "credits_used": 0
+    },
+    "dl-eZIoHVnxdJ0": {
+      "status": "ok",
+      "checked": "2026-10-13T17:15:09.012Z",
+      "credits_used": 0
+    },
+    "dl-aPgQzMDh8sk": {
+      "status": "ok",
+      "checked": "2026-10-13T17:15:10.760Z",
+      "credits_used": 0
+    },
+    "dl-IBr9oORmDk4": {
+      "status": "credits_exhausted",
+      "checked": "2026-10-13T17:15:12.609Z",
       "credits_used": 0
     }
   }
