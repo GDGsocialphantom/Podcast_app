@@ -52,6 +52,6 @@ function setNotes(src, id, notes) {
 }
 
 // Em dashes are not allowed anywhere in the data. Replace spaced ones with a comma, tight ones with a hyphen.
-const noDash = s => String(s).replace(/\s*—\s*/g, (m) => /\s/.test(m) ? ", " : "-").replace(/\s*–\s*/g, m => /\s/.test(m) ? ", " : "-");
+const noDash = s => String(s).replace(/\s*\u2014\s*/g, (m) => /\s/.test(m) ? ", " : "-").replace(/\s*\u2013\s*/g, m => /\s/.test(m) ? ", " : "-");
 
 module.exports = { root, episodesFile, loadData, setNotes, notesSource, noDash };
