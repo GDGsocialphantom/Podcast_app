@@ -196,7 +196,7 @@ function renderEpisode(e) {
     <section class="card"><div class="tx-head"><h2>Transcript</h2><input class="tx-search" id="tx-search" type="search" placeholder="Search this transcript"></div>
       <div class="tx" id="tx"><p class="tx-empty">Transcript coming soon.</p></div></section>
     <aside class="notes card"><h2>Show notes</h2>
-      ${has(n.takeaways) ? `<div><h3>Takeaways</h3><ul>${n.takeaways.map(t => `<li>${esc(t)}</li>`).join("")}</ul></div>` : ""}
+      ${has(n.takeaways) ? `<div><h3>Takeaways</h3><ul>${n.takeaways.map(t => `<li>${esc(t)}</li>`).join("")}</ul>${n.generated === true ? `<p class="gen">Generated from the transcript</p>` : ""}</div>` : ""}
       ${has(n.chapters) ? `<div><h3>Chapters</h3><div style="display:grid;gap:6px">${n.chapters.map(([t, x]) => `<div class="chap"><a href="${yt(e.youtube, t)}" target="_blank" rel="noopener">${ts(t)}</a><span>${esc(x)}</span></div>`).join("")}</div></div>` : ""}
       ${has(n.links) ? `<div><h3>Links</h3><ul>${n.links.map(([x, u]) => `<li><a href="${esc(u)}" target="_blank" rel="noopener">${esc(x)}</a></li>`).join("")}</ul></div>` : ""}
       <div><h3>In this episode</h3><ul>${e.people.map(p => `<li>${esc(p.n)}, ${esc(p.r)}</li>`).join("")}</ul></div>

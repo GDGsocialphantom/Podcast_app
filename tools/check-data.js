@@ -72,6 +72,9 @@ for (const e of EPISODES || []) {
     if (!Array.isArray(e.notes.chapters)) bad(id, "notes.chapters should be an array");
     for (const ch of e.notes.chapters || []) if (!Array.isArray(ch) || typeof ch[0] !== "number" || !ch[1]) bad(id, "each chapter is [seconds, title]");
     for (const l of e.notes.links || []) if (!Array.isArray(l) || !l[0] || !/^https?:\/\//.test(l[1] || "")) bad(id, "each link is [label, url]");
+    if (/\u2014/.test(JSON.stringify(e.notes))) bad(id, "show notes contain an em dash; use a comma, colon or hyphen");
+    if ("generated" in e.notes && typeof e.notes.generated !== "boolean") bad(id, "notes.generated must be true or false when present");
+    if (e.notes.generated === true && !(e.notes.takeaways || []).length) bad(id, "notes.generated is true but there are no takeaways");
   }
 }
 

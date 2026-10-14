@@ -15,6 +15,7 @@
 const fs = require("fs");
 const path = require("path");
 const vm = require("vm");
+const { loadMeta, saveMeta, pickMeta, recordMeta } = require("./lib/video-meta");
 
 const API = "https://www.youtubetranscript.dev/api/v2/transcribe";
 const KEY = process.env.YOUTUBETRANSCRIPT_API_KEY;
@@ -30,6 +31,7 @@ const ids = args.filter(a => !a.startsWith("--"));
 const ctx = vm.createContext({});
 for (const f of ["data/shows.js", "data/episodes.js"]) vm.runInContext(fs.readFileSync(path.join(root, f), "utf8"), ctx, { filename: f });
 const { SHOWS, EPISODES } = vm.runInContext("({ SHOWS, EPISODES })", ctx);
+const meta = loadMeta();   // data/video-meta.json: title and description per episode, for tools/notes-from-descriptions.js
 const hostOf = e => { const s = SHOWS.find(x => x.id === e.show); return s && s.hosts && s.hosts[0] ? s.hosts[0] : "Host"; };
 
 const CUE_MIN = 30, CUE_MAX = 45;   // a cue ends at the first sentence end after 30 seconds, or at 45 seconds
@@ -110,6 +112,7 @@ async function transcribe(youtubeId, retried = false) {
       console.log(`${e.id}: 402 payment_required. Credits are exhausted; stopping the run.`);
       record(e.id, "credits_exhausted", 0); stopped = true; break;
     }
+    if (r.body && r.body.data) { recordMeta(meta, e.id, pickMeta(r.body)); saveMeta(meta); }   // title and description, whatever the outcome
     if (r.status === 404 || code === "no_captions") { console.log(`${e.id}: no captions`); record(e.id, "no_captions", credits); none++; await sleep(GAP_MS); continue; }
     if (r.status === 401) { console.log(`${e.id}: 401 invalid API key. Stopping.`); record(e.id, "error", 0); errors++; stopped = true; break; }
     const segments = r.body && r.body.data && r.body.data.transcript && r.body.data.transcript.segments;
@@ -122,7 +125,8 @@ async function transcribe(youtubeId, retried = false) {
     fs.writeFileSync(file, fileSource(cues));
     record(e.id, "ok", credits);
     const lang = r.body.data.transcript.language || "?", src = r.body.data.transcript.source || "?";
-    console.log(`${e.id}: ${cues.length} cues from ${segments.length} segments (${lang}, ${src}, timestamps in ${unit}, ${credits} credit${credits === 1 ? "" : "s"})`);
+    const m = meta[e.id] || {};
+    console.log(`${e.id}: ${cues.length} cues from ${segments.length} segments (${lang}, ${src}, timestamps in ${unit}, ${credits} credit${credits === 1 ? "" : "s"}; description ${m.description ? "saved" : "not in response, fields: " + (m.fields || []).join(" ")})`);
     written++;
     saveStatus();
     await sleep(GAP_MS);

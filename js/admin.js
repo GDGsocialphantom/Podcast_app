@@ -56,7 +56,7 @@ function episodeSource(e) {
     notes: {
       takeaways: [${e.notes.takeaways.map(q).join(", ")}],
       chapters: [${chapters}],
-      links: [${links}]
+      links: [${links}]${e.notes.generated === true ? ",\n      generated: true" : ""}
     } },`;
 }
 function transcriptSource(e) {  // data/transcripts/<id>.json
@@ -84,6 +84,7 @@ function validateEpisode(e, editingId) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(e.date) || isNaN(Date.parse(e.date))) p.push("Date should be YYYY-MM-DD.");
   if (!(e.duration > 0)) p.push("Duration should be a number of minutes.");
   if (!e.topics.length) p.push("Add at least one topic.");
+  if (/\u2014/.test(JSON.stringify(e.notes))) p.push("Show notes contain an em dash; use a comma, colon or hyphen.");
   if (!e.people.length) p.push("Add at least one person.");
   if (e.people.some(x => !x.n || !x.r)) p.push("Each person needs a name and a role: Name | Role.");
   const single = e.people.filter(x => x.n && !/\s/.test(x.n.trim())).map(x => x.n);
@@ -139,6 +140,7 @@ function episodeFormValues(seed) {
     people: (e.people || []).map(p => `${p.n} | ${p.r}`).join("\n"),
     transcript: "",   // filled from data/transcripts/<id>.json when editing (see renderEpisodeEditor)
     takeaways: (n.takeaways || []).join("\n"),
+    generated: n.generated === true ? (n.takeaways || []).join("\n") : "",   // the generated text as saved; the flag survives only while the field still matches it
     chapters: (n.chapters || []).map(([t, x]) => `${ts(t)} ${x}`).join("\n"),
     links: (n.links || []).map(([x, u]) => `${x} | ${u}`).join("\n")
   };
@@ -160,7 +162,7 @@ function episodeFromForm(v) {
     title: v.title.trim(), summary: v.summary.trim(), topics: commaList(v.topics),
     people: lines(v.people).map(l => l.split("|").map(x => x.trim())).map(([n, r]) => ({ n: n || "", r: r || "" })),
     youtube: parseYouTube(v.youtube), transcript, transcriptError,
-    notes: { takeaways, chapters, links },
+    notes: { takeaways, chapters, links, ...((v.generated || "").trim() && v.takeaways.trim() === v.generated.trim() ? { generated: true } : {}) },
     notesFromPaste
   };
 }
@@ -192,6 +194,8 @@ function renderEpisodeEditor(id) {
       <details ${v.transcript || v.takeaways || v.chapters || v.links ? "open" : ""}><summary>Transcript and show notes</summary>
         ${field("transcript", "Transcript", area("transcript", v.transcript, 6, '[{ "t": 0, "s": "Speaker", "x": "..." }]'), "paste the JSON from tools/transcribe.py (the cue array or the whole file); it comes out as its own file below")}
         ${field("takeaways", "Takeaways", area("takeaways", v.takeaways, 3), "one per line")}
+        <input type="hidden" name="generated" value="${esc(v.generated || "")}">
+        <p class="admin-where" id="ep-gen" ${v.generated ? "" : "hidden"}>These takeaways were generated from the transcript. Editing them clears the generated flag, so they will not be regenerated.</p>
         ${field("chapters", "Chapters", area("chapters", v.chapters, 3, "00:00 Intro\n12:34 The middle part"), "one per line: time then title")}
         ${field("links", "Links", area("links", v.links, 2, "Magis | https://www.magis.ai"), "one per line: Label | URL")}
       </details>
@@ -232,6 +236,8 @@ function renderEpisodeEditor(id) {
       return update();
     }
     saveDraft("episode", id, vals);
+    const gen = document.getElementById("ep-gen");
+    if (gen && vals.generated) gen.textContent = e.notes.generated ? "These takeaways were generated from the transcript. Editing them clears the generated flag, so they will not be regenerated." : "Takeaways edited by hand: the generated flag is cleared and they will not be regenerated.";
     const problems = validateEpisode(e, id);
     probs.innerHTML = problems.map(p => `<li>${esc(p)}</li>`).join("");
     probs.hidden = !problems.length;
