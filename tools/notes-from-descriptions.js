@@ -3,51 +3,49 @@
 //
 //   node tools/notes-from-descriptions.js                 every episode
 //   node tools/notes-from-descriptions.js dl-abc123       one episode
-//   add --fetch to ask YouTubeTranscript.dev for descriptions that are not stored yet
 //
-// Descriptions come from data/video-meta.json, which tools/fetch-transcripts.js fills from the API response when it
-// fetches a transcript. With --fetch (and YOUTUBETRANSCRIPT_API_KEY set) missing descriptions are requested from
-// YouTubeTranscript.dev, but only for episodes that already have a transcript file: the account has processed those
-// videos, so the request is free. Going forward the fetcher stores the description at transcript time, so --fetch is
-// only for catching up. This tool never reads youtube.com.
+// Descriptions live in data/descriptions/<episode id>.txt, the video's description as published on YouTube. The
+// back catalog was saved once from the browser on 2026-10-21; the episode importer stores the description for new
+// episodes when it creates them. This tool never reads youtube.com, and nothing on GitHub does either.
 //
 // Rules: every URL in a description becomes a notes.links entry [label, url], labelled from the surrounding text or
-// the domain. Bare social handles and the channel's own subscribe links are skipped. A list of timestamps becomes
-// notes.chapters when the episode has none. Existing chapters and links are never overwritten; new links are added
-// only when their URL is not already there.
+// the domain. Social handles and the channel's own subscribe and profile links are skipped. A list of timestamps
+// becomes notes.chapters when the episode has none. Existing chapters and links are never overwritten; new links
+// are added only when their URL is not already there.
 const fs = require("fs");
 const path = require("path");
 const { root, episodesFile, loadData, setNotes, noDash } = require("./lib/episodes-file");
-const { loadMeta, saveMeta, pickMeta, recordMeta } = require("./lib/video-meta");
 
-const API = "https://www.youtubetranscript.dev/api/v2/transcribe";
-const args = process.argv.slice(2);
-const doFetch = args.includes("--fetch");
-const ids = args.filter(a => !a.startsWith("--"));
-const KEY = process.env.YOUTUBETRANSCRIPT_API_KEY;
-if (doFetch && !KEY) { console.error("--fetch needs YOUTUBETRANSCRIPT_API_KEY in the environment."); process.exit(2); }
-const sleep = ms => new Promise(r => setTimeout(r, ms));
+const descDir = path.join(root, "data", "descriptions");
+const ids = process.argv.slice(2).filter(a => !a.startsWith("--"));
+
 
 // Links to skip: the channel's own subscribe and social links, and anything that is only a handle.
 const OWN_CHANNEL = /youtube\.com\/(@|channel\/|c\/|user\/)|sub_confirmation=1|youtube\.com\/thedisruptionlab/i;
-const OWN_SOCIAL = /(instagram|facebook|twitter|x|tiktok|linkedin|threads)\.com\/[^\s/]*disruption/i;   // the show's own profiles; guests' profiles stay
+const OWN_SOCIAL = /(instagram|facebook|twitter|x|tiktok|linkedin|threads|youtube)\.com\/[^\s/]*(disruption|keystone)/i;   // the show's and Keystone's own profiles; guests' profiles stay
 const URL_RE = /\b((?:https?:\/\/|www\.)[^\s<>()"']+)/g;
 
+const TRACKING = /^(utm_\w*|gad_\w*|gbraid|gclid|fbclid|igsh|r|ref|showWelcomeOnShare|si)$/i;
 function cleanUrl(u) {
   u = u.replace(/[.,;:!?)\]]+$/, "");
   if (/^www\./i.test(u)) u = "https://" + u;
+  try {   // drop tracking parameters so the same page is one link
+    const x = new URL(u);
+    for (const k of [...x.searchParams.keys()]) if (TRACKING.test(k)) x.searchParams.delete(k);
+    u = x.toString().replace(/\?$/, "");
+  } catch (e) {}
   return u;
 }
-function domainLabel(u) {
-  try { const h = new URL(u).hostname.replace(/^www\./, ""); return h.split(".").slice(0, -1).join(".") || h; } catch (e) { return u; }
+function domainLabel(u) {   // registered name only: open.substack.com -> Substack
+  try { const parts = new URL(u).hostname.replace(/^www\./, "").split("."); return parts.length > 1 ? parts[parts.length - 2] : parts[0]; } catch (e) { return u; }
 }
-const tidy = s => noDash(s).replace(/^[\s\-:|•*>#]+|[\s\-:|•*>#]+$/g, "").replace(/\s+/g, " ").trim();
+const tidy = s => noDash(s).replace(/[\p{Extended_Pictographic}\u{FE0F}\u{200D}]/gu, " ").replace(/^[\s\-:|•*>#]+|[\s\-:|•*>#]+$/g, "").replace(/\s+/g, " ").trim();
 const looksLikeLabel = s => s && s.length >= 2 && s.length <= 70 && !/https?:\/\/|www\./i.test(s);
 
 // Label for a URL: text before it on the same line, else a short previous line, else the domain.
 function labelFor(lines, i, before) {
   let t = tidy(before.replace(/\b(at|here|link|visit|website|learn more|more info|more|check out|follow|see)\s*$/i, ""));
-  t = tidy(t.replace(/^(learn more about|more about|more on|read more about|check out|visit|follow|find|see|website|link to|link)\s+/i, ""));
+  t = tidy(t.replace(/^(learn more about|more about|more on|read more about|check out|visit|follow|find|see|website|link to|link|subscribe to|sign up for)\s+/i, ""));
   if (looksLikeLabel(t)) return cap(t);
   for (let j = i - 1; j >= Math.max(0, i - 2); j--) {
     const prev = tidy(lines[j]);
@@ -94,41 +92,22 @@ function extractChapters(desc) {
   return rows.filter((r, i) => i === 0 || r[0] > rows[i - 1][0]);   // ascending, no duplicate times
 }
 
-async function fetchDescription(youtubeId) {
-  const res = await fetch(API, {
-    method: "POST",
-    headers: { "Authorization": "Bearer " + KEY, "Content-Type": "application/json", "Accept": "application/json" },
-    body: JSON.stringify({ video: youtubeId, language: "en", source: "auto", allow_asr: false, format: { timestamp: false, paragraphs: true, words: false } })
-  });
-  let body = null; try { body = await res.json(); } catch (e) { body = null; }
-  return { status: res.status, code: body && body.code, body };
-}
-
 (async () => {
   const { EPISODES } = loadData();
-  const meta = loadMeta();
   const todo = ids.length ? EPISODES.filter(e => ids.includes(e.id)) : EPISODES;
   for (const id of ids) if (!EPISODES.find(e => e.id === id)) console.log(`${id}: no such episode`);
   let src = fs.readFileSync(episodesFile, "utf8");
-  let withDesc = 0, noDesc = 0, linksAdded = 0, chaptersAdded = 0, changed = 0, fetched = 0, stopped = false;
+  let withDesc = 0, noDesc = 0, linksAdded = 0, chaptersAdded = 0, changed = 0;
   for (const e of todo) {
-    let m = meta[e.id];
-    const hasTranscript = fs.existsSync(path.join(root, "data", "transcripts", e.id + ".json"));
-    if ((!m || !m.description) && doFetch && !stopped && hasTranscript) {
-      let r;
-      try { r = await fetchDescription(e.youtube); fetched++; } catch (err) { console.log(`${e.id}: fetch error, ${err.message}`); r = null; }
-      if (r && (r.status === 402 || r.code === "payment_required")) { console.log(`${e.id}: 402 payment_required, no more fetching this run`); stopped = true; }
-      else if (r && r.status === 401) { console.log(`${e.id}: 401 invalid API key, no more fetching this run`); stopped = true; }
-      else if (r && r.body && r.body.data) { m = recordMeta(meta, e.id, pickMeta(r.body)); saveMeta(meta); if (!m.description) console.log(`${e.id}: response has no description (fields: ${m.fields.join(" ")})`); }
-      else if (r) console.log(`${e.id}: HTTP ${r.status}${r.code ? " " + r.code : ""}`);
-      await sleep(1100);
-    }
-    if (!m || !m.description) { noDesc++; continue; }
+    const file = path.join(descDir, e.id + ".txt");
+    if (!fs.existsSync(file)) { noDesc++; continue; }
+    const desc = fs.readFileSync(file, "utf8");
+    if (!desc.trim()) { noDesc++; continue; }
     withDesc++;
     const n = e.notes || { takeaways: [], chapters: [], links: [] };
     const have = new Set((n.links || []).map(([, u]) => u.toLowerCase().replace(/\/$/, "")));
-    const links = extractLinks(m.description).filter(([, u]) => !have.has(u.toLowerCase().replace(/\/$/, "")));
-    const chapters = (n.chapters && n.chapters.length) ? [] : extractChapters(m.description);
+    const links = extractLinks(desc).filter(([, u]) => !have.has(u.toLowerCase().replace(/\/$/, "")));
+    const chapters = (n.chapters && n.chapters.length) ? [] : extractChapters(desc);
     if (!links.length && !chapters.length) continue;
     const notes = { ...n, links: [...(n.links || []), ...links], chapters: chapters.length ? chapters : (n.chapters || []) };
     src = setNotes(src, e.id, notes);
@@ -138,5 +117,5 @@ async function fetchDescription(youtubeId) {
     for (const [t, x] of chapters) console.log(`    ${String(Math.floor(t / 60)).padStart(2, "0")}:${String(t % 60).padStart(2, "0")} ${x}`);
   }
   if (changed) fs.writeFileSync(episodesFile, src);
-  console.log(`\nDone: ${todo.length} episodes, ${withDesc} with a description, ${noDesc} without${fetched ? ` (${fetched} fetched)` : ""}. ${changed} episodes updated: ${linksAdded} links added, chapters added to ${chaptersAdded}.`);
+  console.log(`\nDone: ${todo.length} episodes, ${withDesc} with a description, ${noDesc} without. ${changed} episodes updated: ${linksAdded} links added, chapters added to ${chaptersAdded}.`);
 })();

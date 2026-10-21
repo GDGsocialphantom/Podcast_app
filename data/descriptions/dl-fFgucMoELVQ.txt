@@ -1,0 +1,20 @@
+Across agriculture, mining, and construction, companies are making million-dollar logistics decisions based on visual guesses — and they're wrong by 30–50%. Warren Wang and his co-founder Cole built Rebulk to replace that guesswork with real-time bulk inventory visibility using lidar, computer vision, and edge computing.
+
+In this live taping of The Disruption Lab, host Kevin McGinnis unpacks Warren's journey from a failed social media startup to a Y Combinator-backed company with Cargill as an early customer — funded entirely by Kansas City pre-seed investors.
+
+What you'll learn in this episode:
+→ Why bulk inventory is supply chain's biggest blind spot
+→ How a packing peanut proof-of-concept landed a Cargill pilot
+→ The sales playbook that compressed an enterprise deal into weeks
+→ What YC actually gave them (and what Kansas City gave them first)
+→ Why they turned down Silicon Valley to build from the Midwest
+→ The identity crisis that almost killed the company before it started
+
+About the Guest:
+Warren Wang is the co-founder and CEO of Rebulk (formerly Dscribeai), a Y Combinator-backed startup building the supply chain operating system for bulk materials industries. Originally from Indonesia, Warren became a U.S. citizen the day this episode was recorded.
+
+🎙️ About The Disruption Lab:
+The Disruption Lab explores how people build and reshape the systems around them — across society, business, and technology. Hosted by Kevin McGinnis.
+
+🔗 Connect:
+Subscribe and follow The Disruption Lab for new episodes.

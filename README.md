@@ -14,9 +14,9 @@ data/transcripts/     one <episode id>.json per episode (array of { t, s, x } cu
 auth/                 login, sessions, admin role and the user store (see auth/README.md)
 tools/fetch-transcripts.js  pulls transcripts from YouTubeTranscript.dev into data/transcripts/ (runs on GitHub; needs the API key)
 data/transcript-status.json  what the fetcher did per episode: ok, no captions, credits exhausted or error, plus credits used
-data/video-meta.json  video title and description per episode, saved by the fetcher; source for links and chapters
+data/descriptions/    one <episode id>.txt per episode: the YouTube description as published; source for links and chapters
 tools/notes-from-descriptions.js  turns URLs and timestamp lists in the description into notes.links and notes.chapters (never overwrites)
-tools/generate-takeaways.js  writes 3 to 5 takeaways per transcript with the Anthropic API (needs ANTHROPIC_API_KEY); marks them notes.generated
+tools/generate-takeaways.js  writes 3 to 5 takeaways per transcript with Gemini on the free tier (needs GEMINI_API_KEY); marks them notes.generated
 tools/transcribe.py   turns an episode's audio into a clean transcript JSON
 tools/check-data.js   validates the data files and every transcript; runs on every push via GitHub Actions
 ```
@@ -31,7 +31,7 @@ Where to look when something breaks:
 
 ## Add an episode
 1. Log in as admin and open Add episode. Fill in the form; it generates the episode object and checks it as you type. Copy the output and paste it at the top of the `EPISODES` array in `data/episodes.js`. (Or copy any episode object in the file by hand.)
-2. Transcript: nothing to do by hand. When the commit lands on `main`, the Transcripts workflow fetches `data/transcripts/<episode id>.json` from YouTubeTranscript.dev and commits it (the key is a repo secret, `YOUTUBETRANSCRIPT_API_KEY`; episodes that already have a file are never refetched). Admin > Transcripts shows the status per episode. The same run then fills show notes: links and chapters from the video description and takeaways from the transcript (repo secret `ANTHROPIC_API_KEY`). Generated takeaways say so on the episode page; edit them in the form and the generated flag clears, so they are never overwritten. For a clean transcript, run `python tools/transcribe.py episode.mp3 --notes` (needs `OPENAI_API_KEY`, `pip install openai`) and paste the output into the form's Transcript field; the form outputs the transcript file separately.
+2. Transcript: nothing to do by hand. When the commit lands on `main`, the Transcripts workflow fetches `data/transcripts/<episode id>.json` from YouTubeTranscript.dev and commits it (the key is a repo secret, `YOUTUBETRANSCRIPT_API_KEY`; episodes that already have a file are never refetched). Admin > Transcripts shows the status per episode. The same run then fills show notes: links and chapters from `data/descriptions/<episode id>.txt` (save the YouTube description there when adding an episode by hand) and takeaways from the transcript with Gemini on the free tier (repo secret `GEMINI_API_KEY`; the workflow also runs daily so the back catalog finishes within the daily quota). Generated takeaways say so on the episode page; edit them in the form and the generated flag clears, so they are never overwritten. For a clean transcript, run `python tools/transcribe.py episode.mp3 --notes` (needs `OPENAI_API_KEY`, `pip install openai`) and paste the output into the form's Transcript field; the form outputs the transcript file separately.
 3. Run `node tools/check-data.js`. It catches missing fields, bad dates, unknown show ids and bad transcript files.
 4. Commit to `main`. GitHub Pages redeploys in about a minute.
 

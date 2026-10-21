@@ -1,13 +1,16 @@
 name: Transcripts
 
 # Fetches transcripts from YouTubeTranscript.dev for every episode that has no file in data/transcripts/, then builds
-# show notes: links and chapters from the video description, takeaways from the transcript (Anthropic API).
-# Runs when data/episodes.js changes on main, or by hand (Actions > Transcripts > Run workflow) against the branch you pick.
+# show notes: links and chapters from the stored video description, takeaways from the transcript (Gemini, free tier).
+# Runs when data/episodes.js changes on main, once a day so the takeaways back catalog finishes within the free quota,
+# or by hand (Actions > Transcripts > Run workflow) against the branch you pick.
 # Existing transcript files are never refetched and existing takeaways are never regenerated, so a later run never pays twice.
 on:
   push:
     branches: [main]
     paths: ["data/episodes.js"]
+  schedule:
+    - cron: "23 13 * * *"   # 13:23 UTC daily (8:23 am Central in summer, 7:23 am in winter)
   workflow_dispatch:
     inputs:
       episode:
@@ -40,15 +43,13 @@ jobs:
           grep -E '^Done:' fetch.log | sed 's/^/::notice title=Transcripts::/' || true
           { echo '### Transcripts'; echo; echo '```'; cat fetch.log; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
       - name: Links and chapters from descriptions
-        env:
-          YOUTUBETRANSCRIPT_API_KEY: ${{ secrets.YOUTUBETRANSCRIPT_API_KEY }}
         run: |
-          node tools/notes-from-descriptions.js --fetch ${{ github.event.inputs.episode }} | tee notes.log || echo "::warning title=Links and chapters::stopped early, see the log"
+          node tools/notes-from-descriptions.js ${{ github.event.inputs.episode }} | tee notes.log || echo "::warning title=Links and chapters::stopped early, see the log"
           grep -E '^Done:' notes.log | sed 's/^/::notice title=Links and chapters::/' || true
           { echo '### Links and chapters'; echo; echo '```'; cat notes.log; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
       - name: Takeaways from transcripts
         env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: |
           node tools/generate-takeaways.js ${{ github.event.inputs.episode }} | tee takeaways.log || echo "::warning title=Takeaways::stopped early, see the log"
           grep -E '^(Done:|Tokens:)' takeaways.log | sed 's/^/::notice title=Takeaways::/' || true
@@ -58,7 +59,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/transcripts data/transcript-status.json data/video-meta.json data/episodes.js
+          git add data/transcripts data/transcript-status.json data/episodes.js
           if git diff --cached --quiet; then echo "No changes."; exit 0; fi
           SUMMARY=$(grep -h -m1 '^Done:' fetch.log notes.log takeaways.log | paste -sd '\n' -)
           git commit -m "Add transcripts and show notes" -m "$SUMMARY"

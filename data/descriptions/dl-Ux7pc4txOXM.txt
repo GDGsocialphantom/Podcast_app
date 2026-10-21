@@ -1,0 +1,21 @@
+Artificial intelligence and autonomy are no longer future concepts in national security—they’re shaping real-world decisions, operations, and outcomes today. But while AI technology is advancing rapidly, the real challenge lies in data, culture, trust, and speed of adoption.
+
+In this special episode of The Disruption Lab, we explore Building Autonomy and AI for National Security in Kansas City, featuring leaders from the U.S. military, academia, advanced manufacturing, and the AI industry. Together, they offer an inside look at how AI and autonomous systems are being developed, tested, and deployed across defense and intelligence—and what’s still holding progress back.
+
+This conversation brings together:
+- COL Dave Wright, Chief Data Officer, U.S. Army Combined Arms Command at Fort Leavenworth
+- Col. Chris Hogan, Commander of the 184th Intelligence, Surveillance, and Reconnaissance Group, Kansas Air National Guard at McConnell AFB
+- Matthew Hizer, Director of Operations, Global Security at the Kansas City National Security Campus (KCNSC / Honeywell FM&T)
+- Dr. Michael J. Pritchard, PhD, Senior Faculty in Machine Learning & Autonomous Systems at Kansas State University Salina Aerospace & Technology Campus
+-Jon Kramer, Chief Technology Officer at Torch.AI
+
+Throughout the episode, the panel discusses:
+- Why AI in defense is fundamentally a data and systems integration problem
+- How autonomy is changing intelligence, manufacturing, and battlefield decision-making
+- The cultural and organizational barriers slowing AI adoption
+- The importance of human trust, human-in-the-loop systems, and risk tolerance
+- What the U.S. can learn from global competitors and real-world conflicts like Ukraine
+
+This special episode was presented by AFCEA Kansas City, with a special thank-you to our moderator Molly Christie, Public Sector leader at Unstructured, for leading a thoughtful and timely discussion.
+
+If you’re interested in AI in defense, national security innovation, autonomous systems, military AI, or the future of warfare, this episode offers a rare, behind-the-scenes perspective from those building and deploying these systems today.
