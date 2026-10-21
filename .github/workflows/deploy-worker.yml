@@ -1,0 +1,37 @@
+name: Deploy Worker
+
+# Deploys worker/ to the Cloudflare Worker named "podcast-app" (see worker/wrangler.toml) whenever worker/ or
+# tools/rules.js changes on main, or by hand. Needs the repo secrets CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID.
+# The Worker's own secrets (GitHub token, OAuth app, admin list, session secret) live in the Cloudflare dashboard
+# and survive deploys; nothing secret is in this repo.
+on:
+  push:
+    branches: [main]
+    paths: ["worker/**", "tools/rules.js", ".github/workflows/deploy-worker.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-worker
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm ci --prefer-offline
+        working-directory: worker
+      - name: Deploy
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: worker
+          command: deploy
+      - run: echo "::notice title=Worker::Deployed podcast-app from ${GITHUB_SHA::7}"

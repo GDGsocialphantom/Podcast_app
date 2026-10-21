@@ -72,3 +72,12 @@
 .admin-table tr.st-ok td:nth-child(2) { color: #15803D; }
 .admin-table tr.st-no_captions td:nth-child(2), .admin-table tr.st-credits_exhausted td:nth-child(2), .admin-table tr.st-error td:nth-child(2) { color: #B91C1C; }
 .admin-table tr.st-none td:nth-child(2) { color: var(--muted); }
+
+/* save status and the by-hand code fallback */
+.save-status.ok { color: #15803D; }
+.save-status.bad { color: #B91C1C; }
+.admin-code details { display: grid; gap: 10px; }
+.admin-code summary { list-style: none; cursor: pointer; }
+.admin-code summary::-webkit-details-marker { display: none; }
+.admin-code summary .eyebrow::before { content: "▸ "; }
+.admin-code details[open] summary .eyebrow::before { content: "▾ "; }

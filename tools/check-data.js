@@ -19,6 +19,7 @@ for (const f of ["data/shows.js", "data/episodes.js"]) {
   src += code + "\n";
 }
 const { SHOWS, EPISODES } = vm.runInContext(src + "\n;({ SHOWS: typeof SHOWS === 'undefined' ? undefined : SHOWS, EPISODES: typeof EPISODES === 'undefined' ? undefined : EPISODES })", ctx);
+const RULES = require("./rules.js");   // the same rules js/admin.js and the Worker use
 const problems = [];
 const bad = (id, msg) => problems.push(`${id}: ${msg}`);
 
@@ -28,54 +29,22 @@ if (!Array.isArray(EPISODES)) bad("episodes", "EPISODES is not an array");
 const showIds = new Set();
 for (const s of SHOWS || []) {
   const id = s.id || "(no id)";
-  if (!s.id) bad("shows", "a show has no id");
-  if (showIds.has(s.id)) bad(id, "duplicate show id");
+  if (s.id && showIds.has(s.id)) bad(id, "duplicate show id");
+  for (const msg of RULES.validateShow(s, { showIds, editingId: s.id })) bad(id, msg);
   showIds.add(s.id);
-  for (const k of ["name", "color", "org", "tagline", "about"]) if (!s[k]) bad(id, `show missing ${k}`);
-  if (s.color && !/^#[0-9a-fA-F]{6}$/.test(s.color)) bad(id, "color should be a 6-digit hex like #1F2937");
-  if (s.ink && !/^#[0-9a-fA-F]{6}$/.test(s.ink)) bad(id, "ink should be a 6-digit hex");
-  if (s.logo && !/^assets\/shows\/[a-z0-9-]+\.(png|svg|jpg|webp)$/.test(s.logo)) bad(id, "logo should be a file under assets/shows/");
-  if (!Array.isArray(s.hosts) || !s.hosts.length) bad(id, "show has no hosts");
 }
 
-// Episodes whose people line carries a "// TODO full name" comment: a first-name-only guest is known and waiting on records.
 const episodesSrc = fs.readFileSync(path.join(root, "data/episodes.js"), "utf8");
-const todoIds = new Set();
-for (const block of episodesSrc.split(/\n(?=  \{ id: ")/)) { const m = block.match(/id: "([^"]+)"/); if (m && /\/\/\s*TODO full name/.test(block)) todoIds.add(m[1]); }
-
 const epIds = new Set();
 const SAMPLE_YT = "dQw4w9WgXcQ";
 for (const e of EPISODES || []) {
   const id = e.id || "(no id)";
-  if (!e.id) bad("episodes", "an episode has no id");
-  if (epIds.has(e.id)) bad(id, "duplicate episode id");
+  if (e.id && epIds.has(e.id)) bad(id, "duplicate episode id");
+  const r = RULES.validateEpisode(e, { showIds, episodeIds: epIds, editingId: e.id, todoName: RULES.hasTodoName(episodesSrc, e.id) });
+  for (const msg of r.problems) bad(id, msg);
+  for (const msg of r.warnings) console.warn(`warning ${id}: ${msg}`);
   epIds.add(e.id);
-  if (e.id && /^(home|find|shows|login)$/.test(e.id)) bad(id, "id collides with a route name");
-  if (e.id && e.id.startsWith("show-")) bad(id, "ids starting with show- collide with show pages");
-  if (e.id && e.id.startsWith("admin-")) bad(id, "ids starting with admin- collide with admin pages");
-  if (!showIds.has(e.show)) bad(id, `show "${e.show}" does not exist in shows.js`);
-  for (const k of ["title", "summary", "format", "date"]) if (!e[k]) bad(id, `missing ${k}`);
-  if (e.date && !/^\d{4}-\d{2}-\d{2}$/.test(e.date)) bad(id, `date "${e.date}" should be YYYY-MM-DD`);
-  if (e.date && isNaN(Date.parse(e.date))) bad(id, `date "${e.date}" is not a real date`);
-  if (typeof e.duration !== "number" || e.duration <= 0) bad(id, "duration should be a number of minutes");
-  if (!Array.isArray(e.topics) || !e.topics.length) bad(id, "no topics");
-  if (!Array.isArray(e.people) || !e.people.length) bad(id, "no people");
-  for (const p of e.people || []) {
-    if (!p.n || !p.r) { bad(id, "each person needs n (name) and r (role)"); continue; }
-    if (!/\s/.test(p.n.trim()) && !todoIds.has(e.id)) console.warn(`warning ${id}: person "${p.n}" has no last name; add it, or mark the people line with // TODO full name`);
-  }
-  if (!e.youtube || !/^[\w-]{11}$/.test(e.youtube)) bad(id, "youtube should be an 11-character video id");
   if (e.youtube === SAMPLE_YT) console.warn(`warning ${id}: still using the sample YouTube id`);
-  if ("transcript" in e) bad(id, "transcripts no longer live in episodes.js; move it to data/transcripts/" + e.id + ".json");
-  if (e.notes) {
-    if (!Array.isArray(e.notes.takeaways)) bad(id, "notes.takeaways should be an array");
-    if (!Array.isArray(e.notes.chapters)) bad(id, "notes.chapters should be an array");
-    for (const ch of e.notes.chapters || []) if (!Array.isArray(ch) || typeof ch[0] !== "number" || !ch[1]) bad(id, "each chapter is [seconds, title]");
-    for (const l of e.notes.links || []) if (!Array.isArray(l) || !l[0] || !/^https?:\/\//.test(l[1] || "")) bad(id, "each link is [label, url]");
-    if (/\u2014/.test(JSON.stringify(e.notes))) bad(id, "show notes contain an em dash; use a comma, colon or hyphen");
-    if ("generated" in e.notes && typeof e.notes.generated !== "boolean") bad(id, "notes.generated must be true or false when present");
-    if (e.notes.generated === true && !(e.notes.takeaways || []).length) bad(id, "notes.generated is true but there are no takeaways");
-  }
 }
 
 // data/transcripts/<episode id>.json: one file per episode, an array of cues { t: seconds, s: speaker, x: text }
@@ -87,13 +56,7 @@ if (fs.existsSync(txDir)) {
     let cues;
     try { cues = JSON.parse(fs.readFileSync(path.join(txDir, f), "utf8")); } catch (e) { bad(label, "does not parse as JSON: " + e.message); continue; }
     if (!epIds.has(id)) console.warn(`warning ${label}: no episode with id "${id}"`);
-    if (!Array.isArray(cues)) { bad(label, "should be an array of cues"); continue; }
-    let last = -1;
-    for (const c of cues) {
-      if (!c || typeof c.t !== "number" || typeof c.s !== "string" || typeof c.x !== "string" || !c.s || !c.x) { bad(label, "cues need numeric t (seconds), string s (speaker) and x (text)"); break; }
-      if (c.t < last) { bad(label, `cue at ${c.t}s is out of order`); break; }
-      last = c.t;
-    }
+    for (const msg of RULES.validateTranscript(cues)) bad(label, msg);
     txCount++;
   }
 }
