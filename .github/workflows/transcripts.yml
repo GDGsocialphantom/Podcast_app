@@ -25,6 +25,10 @@ concurrency:
   group: transcripts
   cancel-in-progress: false
 
+defaults:
+  run:
+    shell: bash   # bash -eo pipefail, so a tool that exits non-zero is seen through the tee and gets its warning
+
 jobs:
   fetch:
     runs-on: ubuntu-latest
