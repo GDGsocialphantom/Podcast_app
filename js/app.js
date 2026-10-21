@@ -212,10 +212,11 @@ function renderEpisode(e) {
     });
   };
   // Transcripts live in data/transcripts/<id>.json and load after the page renders. No file, a 404 or a blocked fetch (file://) leaves the placeholder.
+  // Both fetches revalidate (cache: "no-cache") because GitHub Pages caches files for 10 minutes; a 304 is cheap and new transcripts show up on the next visit.
   // Transcripts are fetched on GitHub by tools/fetch-transcripts.js, never from the browser. data/transcript-status.json
   // says which episodes have been checked and found to have no captions, so the page can say so instead of "coming soon".
   const txUrl = `data/transcripts/${encodeURIComponent(e.id)}.json`;
-  if (location.protocol !== "file:") fetch(txUrl).then(r => r.ok ? r.json() : null).then(cues => {
+  if (location.protocol !== "file:") fetch(txUrl, { cache: "no-cache" }).then(r => r.ok ? r.json() : null).then(cues => {
     if (location.hash.slice(1) !== e.id) return; // user already navigated away
     if (Array.isArray(cues) && cues.length) { tx.innerHTML = cues.map(cueHTML).join(""); if (search.value) search.oninput(); return; }
     return transcriptStatus().then(st => {
@@ -229,7 +230,7 @@ function renderEpisode(e) {
 
 let txStatusCache = null;
 function transcriptStatus() {   // data/transcript-status.json, fetched once per page load
-  if (!txStatusCache) txStatusCache = fetch("data/transcript-status.json").then(r => r.ok ? r.json() : null).catch(() => null);
+  if (!txStatusCache) txStatusCache = fetch("data/transcript-status.json", { cache: "no-cache" }).then(r => r.ok ? r.json() : null).catch(() => null);
   return txStatusCache;
 }
 
