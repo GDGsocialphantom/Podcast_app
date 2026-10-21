@@ -1,0 +1,25 @@
+Why do new drugs and medical breakthroughs take so long to reach real people?
+
+In this episode of The Disruption Lab, we sit down with Kyle McAllister, founder of trially, an AI-driven clinical trials company, to unpack the uncomfortable truth: the biggest bottleneck in clinical trials isn’t innovation — it’s patient recruitment. And in many hospitals, that process still looks like teams of research staff manually reading patient charts line-by-line to find eligible participants.
+
+Kyle shares how his “lived experience” inside electronic health records (EHRs) and hospital data systems pushed him to build a company that helps research teams identify qualified trial candidates faster — and then actually engage them through AI-powered calling, texting, and email outreach that can screen patients using complex clinical criteria.
+
+But this isn’t a hype episode. We talk about the real friction: trust, data security, procurement, and the fear of change in one of the most regulated industries on the planet. Kyle also gets personal about the emotional whiplash of entrepreneurship, learning not to take rejection personally, and why founder fellowship (and Kansas City’s ecosystem) matters more than people realize.
+
+If you’re interested in AI in healthcare, clinical trials innovation, health tech startups, or how founders sell into high-risk enterprise systems, this conversation will give you a real behind-the-scenes look at what it takes to modernize medicine without breaking trust.
+
+In this episode, you’ll learn:
+
+Why patient recruitment is the #1 reason clinical trials move slowly
+
+How AI can scan millions of patient records to match trial eligibility criteria
+
+What hospitals struggle to believe when an AI startup claims it can “do it faster”
+
+Where AI helps most — and where precision and error margins still matter
+
+How to build trust in healthcare tech (because “healthcare builds at the speed of trust”)
+
+The founder lessons: feedback, faster decision-making, and imposter syndrome
+
+🎧 Listen now and see why the future of clinical trials might depend less on laboratories… and more on better systems.
