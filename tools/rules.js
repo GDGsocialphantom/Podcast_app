@@ -15,7 +15,7 @@
   const YT = /^[\w-]{11}$/;
   const ROUTES = /^(home|find|shows|login)$/;
   const DATE = /^\d{4}-\d{2}-\d{2}$/;
-  const EM_DASH = /—/;
+  const EM_DASH = /\u2014/;
   const q = s => JSON.stringify(String(s == null ? "" : s));
   const has = (set, v) => set ? (set instanceof Set ? set.has(v) : Array.from(set).includes(v)) : false;
 
