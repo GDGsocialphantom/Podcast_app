@@ -1,5 +1,5 @@
 // App logic: rendering, routing and the episode matcher.
-// Data lives in data/, auth lives in auth/, the admin editor in js/admin.js. This file only reads session state through isAdmin() and session.
+// Data lives in data/, auth lives in auth/, the admin editor in js/admin.js. This file only reads session state through isAdmin() and session, and calls refreshSession() once on load.
 const SELF_HOSTED = true; // true when this file is on your own domain: the episode page then embeds the YouTube player directly
 
 const app = document.getElementById("app");
@@ -257,3 +257,4 @@ function route() {
 window.addEventListener("hashchange", () => { window.scrollTo({ top: 0 }); route(); });
 renderChrome();
 route();
+refreshSession();   // confirm the cached session with the backend; re-renders if it changed (login, logout elsewhere, expiry)

@@ -6,7 +6,6 @@
 .login input { border: 1px solid var(--line); background: var(--surface); color: var(--ink); font: inherit; padding: 9px 12px; border-radius: 6px; }
 .login .btn { width: 100%; }
 .login .err { color: #DC2626; font-size: 13.5px; margin: 0; }
-.login .dev { font-size: 12px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 14px; display: grid; gap: 4px; }
 .login-logo { display: flex; justify-content: center; align-items: center; gap: 10px; margin: 24px 0 -40px; font-weight: 800; font-size: 22px; letter-spacing: .04em; text-transform: uppercase; }
 .login-logo .mark { width: 34px; height: 34px; }
 .adminbar { background: var(--accent); color: var(--accent-ink); font-size: 13px; }

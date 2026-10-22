@@ -1,10 +1,11 @@
-// Admin editor: forms for episodes and shows that GENERATE the object to paste into data/, plus the transcript file for data/transcripts/.
-// Nothing here writes to the repo or to any backend. See claude/known-issues.md, "Where does the admin editor save?"
-// Drafts are kept in localStorage (per browser) so a half-finished form survives a reload.
+// Admin editor: forms for episodes and shows. Save posts the object to the Worker (auth/auth.js, WORKER_URL), which
+// validates it with the same rules as tools/check-data.js (tools/rules.js, loaded here too) and commits it to main.
+// The generated code stays visible as a fallback for a hand edit. Drafts are kept in localStorage (per browser).
 //
-// Exposed to js/app.js:  renderAdmin(kind, id)   kind = "episode" | "show" | "shows"
+// Exposed to js/app.js:  renderAdmin(kind, id)   kind = "episode" | "show" | "shows" | "transcripts"
 // Expects from js/app.js at call time:  app, esc, setNav, showById, episodeRow, ts, EPISODES, SHOWS
-// Expects from auth/auth.js:  isAdmin(), renderLogin()
+// Expects from auth/auth.js:  isAdmin(), renderLogin(), apiPost()
+// Expects from tools/rules.js:  RULES
 
 const FORMATS = ["Interview", "Panel", "Solo", "Talk"];
 const DRAFT_PREFIX = "kl.draft.";
@@ -42,77 +43,20 @@ async function copyText(text, btn) {
   const old = btn.textContent; btn.textContent = "Copied"; setTimeout(() => btn.textContent = old, 1400);
 }
 
-/* ---------- serializers: match the style of data/episodes.js and data/shows.js ---------- */
-function episodeSource(e) {
-  const people = e.people.map(p => `{ n: ${q(p.n)}, r: ${q(p.r)} }`).join(", ");
-  const chapters = e.notes.chapters.map(([t, n]) => `[${t}, ${q(n)}]`).join(", ");
-  const links = e.notes.links.map(([n, u]) => `[${q(n)}, ${q(u)}]`).join(", ");
-  return `  { id: ${q(e.id)}, show: ${q(e.show)}, format: ${q(e.format)}, date: ${q(e.date)}, duration: ${e.duration},
-    title: ${q(e.title)},
-    summary: ${q(e.summary)},
-    topics: [${e.topics.map(q).join(", ")}],
-    people: [${people}],
-    youtube: ${q(e.youtube)},
-    notes: {
-      takeaways: [${e.notes.takeaways.map(q).join(", ")}],
-      chapters: [${chapters}],
-      links: [${links}]${e.notes.generated === true ? ",\n      generated: true" : ""}
-    } },`;
-}
-function transcriptSource(e) {  // data/transcripts/<id>.json
-  return "[\n" + e.transcript.map(c => `  { "t": ${c.t}, "s": ${q(c.s)}, "x": ${q(c.x)} }`).join(",\n") + "\n]\n";
-}
-function showSource(s) {
-  return `  { id: ${q(s.id)}, name: ${q(s.name)}, color: ${q(s.color)}, ink: ${q(s.ink || "#FFFFFF")}, logo: ${q(s.logo || "assets/shows/" + s.id + ".png")}, org: ${q(s.org)},
-    tagline: ${q(s.tagline)},
-    hosts: [${s.hosts.map(q).join(", ")}],
-    about: ${q(s.about)} },`;
-}
-
-/* ---------- validation: same rules as tools/check-data.js ---------- */
+/* ---------- serializers and validation: tools/rules.js, shared with check-data and the Worker ---------- */
+const episodeSource = (e, opts) => RULES.episodeSource(e, opts);
+const showSource = s => RULES.showSource(s);
+const transcriptSource = e => RULES.transcriptSource(e.transcript);
 function validateEpisode(e, editingId) {
-  const p = [];
-  if (!e.id) p.push("Needs an id.");
-  else {
-    if (/^(home|find|shows|login)$/.test(e.id) || e.id.startsWith("show-") || e.id.startsWith("admin-")) p.push("That id collides with a page route.");
-    if (e.id !== editingId && EPISODES.some(x => x.id === e.id)) p.push(`An episode with id "${e.id}" already exists.`);
-  }
-  if (!showById(e.show)) p.push("Pick a show.");
-  if (!e.title) p.push("Needs a title.");
-  if (!e.summary) p.push("Needs a summary.");
-  if (!e.format) p.push("Pick a format.");
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(e.date) || isNaN(Date.parse(e.date))) p.push("Date should be YYYY-MM-DD.");
-  if (!(e.duration > 0)) p.push("Duration should be a number of minutes.");
-  if (!e.topics.length) p.push("Add at least one topic.");
-  if (/\u2014/.test(JSON.stringify(e.notes))) p.push("Show notes contain an em dash; use a comma, colon or hyphen.");
-  if (!e.people.length) p.push("Add at least one person.");
-  if (e.people.some(x => !x.n || !x.r)) p.push("Each person needs a name and a role: Name | Role.");
-  const single = e.people.filter(x => x.n && !/\s/.test(x.n.trim())).map(x => x.n);
-  if (single.length) p.push(`Heads up: ${single.join(", ")} ${single.length === 1 ? "has" : "have"} no last name. Add it, or keep the first name and mark the people line with // TODO full name after pasting.`);
-  if (!/^[\w-]{11}$/.test(e.youtube)) p.push("YouTube should be an 11-character video id or a YouTube URL.");
+  const r = RULES.validateEpisode(e, { showIds: SHOWS.map(x => x.id), episodeIds: EPISODES.map(x => x.id), editingId, allowTranscript: true });
+  const p = r.problems.slice();
   if (e.transcriptError) p.push("Transcript: " + e.transcriptError);
-  let last = -1;
-  for (const c of e.transcript) {
-    if (typeof c.t !== "number" || !c.s || !c.x) { p.push("Transcript cues need t (seconds), s (speaker) and x (text)."); break; }
-    if (c.t < last) { p.push(`Transcript cue at ${c.t}s is out of order.`); break; }
-    last = c.t;
-  }
-  if (e.notes.chapters.some(([t, n]) => isNaN(t) || !n)) p.push("Each chapter line is a time then a title, e.g. 12:34 The middle part.");
-  if (e.notes.links.some(([n, u]) => !n || !/^https?:\/\//.test(u))) p.push("Each link line is Label | https://url");
+  p.push(...RULES.validateTranscript(e.transcript));
+  for (const w of r.warnings) p.push("Heads up: " + w);
   return p;
 }
 function validateShow(s, editingId) {
-  const p = [];
-  if (!s.id) p.push("Needs an id.");
-  else {
-    if (!/^[a-z0-9-]+$/.test(s.id)) p.push("Id should be lowercase letters, numbers and dashes.");
-    if (s.id !== editingId && SHOWS.some(x => x.id === s.id)) p.push(`A show with id "${s.id}" already exists.`);
-  }
-  for (const k of ["name", "color", "org", "tagline", "about"]) if (!s[k]) p.push(`Needs ${k}.`);
-  if (s.color && !/^#[0-9a-fA-F]{6}$/.test(s.color)) p.push("Brand color should be a 6-digit hex like #1F2937.");
-  if (s.ink && !/^#[0-9a-fA-F]{6}$/.test(s.ink)) p.push("Text color should be a 6-digit hex.");
-  if (!s.hosts.length) p.push("Add at least one host.");
-  return p;
+  return RULES.validateShow(s, { showIds: SHOWS.map(x => x.id), editingId });
 }
 
 /* ---------- form pieces ---------- */
@@ -126,7 +70,21 @@ function adminShell({ title, sub, form, back = "#home", backLabel = "All episode
     <p style="max-width:62ch;color:var(--muted);margin:0">${sub}</p></section>${form}`;
   setNav(null);
 }
-const NOWRITE = `This form generates the code for <code>data/</code>. Nothing saves from the browser: copy the output, paste it into the file, run <code>node tools/check-data.js</code> and commit.`;
+const NOWRITE = `Save commits straight to <code>main</code> on GitHub as you; the site updates a minute or two later. The generated code below is there if you would rather paste it by hand.`;
+// Shared Save handling: disables the button, posts, shows the commit link or the Worker's error.
+function wireSave(btn, status, send) {
+  btn.onclick = async () => {
+    btn.disabled = true; status.className = "admin-where save-status"; status.textContent = "Saving to GitHub…";
+    try {
+      const r = await send();
+      status.innerHTML = `Saved. <a href="${esc(r.url)}" target="_blank" rel="noopener">Commit ${esc(String(r.commit).slice(0, 7))}</a>. The site updates in a minute or two.${r.warnings && r.warnings.length ? ` Heads up: ${esc(r.warnings.join(" "))}` : ""}`;
+      status.classList.add("ok");
+    } catch (err) {
+      status.textContent = "Not saved: " + err.message;
+      status.classList.add("bad");
+    } finally { btn.disabled = false; }
+  };
+}
 
 /* ---------- episode editor ---------- */
 function episodeFormValues(seed) {
@@ -203,10 +161,12 @@ function renderEpisodeEditor(id) {
     </form>
     <div class="admin-out">
       <div class="card admin-preview"><p class="eyebrow">Preview</p><div class="ep-list" id="ep-preview"></div></div>
-      <div class="card admin-code"><div class="admin-code-head"><p class="eyebrow">Paste into data/episodes.js</p><button type="button" class="btn small" id="ep-copy">Copy</button></div>
+      <div class="card admin-code"><div class="admin-code-head"><p class="eyebrow">Save to the site</p><button type="button" class="btn small" id="ep-save">Save</button></div>
         <ul class="problems" id="ep-problems"></ul>
+        <p class="admin-where" id="ep-status">Commits <code>data/episodes.js</code>${existing ? "" : " with the new episode"} to main as you${existing ? "" : "; the Transcripts workflow then fetches its transcript"}.</p></div>
+      <div class="card admin-code"><details><summary class="admin-code-head"><p class="eyebrow">Or paste into data/episodes.js by hand</p><button type="button" class="btn small" id="ep-copy">Copy</button></summary>
         <p class="admin-where" id="ep-where"></p>
-        <pre id="ep-code"></pre></div>
+        <pre id="ep-code"></pre></details></div>
       <div class="card admin-code" id="tx-out" hidden><div class="admin-code-head"><p class="eyebrow" id="tx-where">Save as data/transcripts/</p><button type="button" class="btn small" id="tx-copy">Copy</button></div>
         <pre id="tx-code"></pre></div>
     </div></div>`
@@ -253,8 +213,17 @@ function renderEpisodeEditor(id) {
   form.oninput = update;
   form.onchange = update;
   form.onsubmit = ev => ev.preventDefault();
-  document.getElementById("ep-copy").onclick = ev => copyText(code.textContent, ev.currentTarget);
+  document.getElementById("ep-copy").onclick = ev => { ev.preventDefault(); copyText(code.textContent, ev.currentTarget); };
   document.getElementById("ep-clear").onclick = () => { clearDraft("episode", id); renderEpisodeEditor(id); };
+  wireSave(document.getElementById("ep-save"), document.getElementById("ep-status"), async () => {
+    const e = episodeFromForm(values());
+    const blocking = validateEpisode(e, id).filter(p => !p.startsWith("Heads up:"));
+    if (blocking.length) throw new Error("fix the problems listed above first.");
+    const { transcript, transcriptError, notesFromPaste, ...episode } = e;
+    const r = await apiPost("/save/episode", { episode, editingId: id || null, transcript: transcript.length ? transcript : undefined });
+    clearDraft("episode", id);
+    return r;
+  });
   update();
 }
 
@@ -353,14 +322,16 @@ function renderShowEditor(id) {
     </form>
     <div class="admin-out">
       <div class="card admin-preview brand-preview" id="brand-preview"></div>
-      <div class="card admin-code"><div class="admin-code-head"><p class="eyebrow">Paste into data/shows.js</p><span class="btnrow"><a class="btn ghost small" id="logo-download" hidden download>Download logo</a><button type="button" class="btn small" id="show-copy">Copy</button></span></div>
+      <div class="card admin-code"><div class="admin-code-head"><p class="eyebrow">Save to the site</p><button type="button" class="btn small" id="show-save">Save</button></div>
         <ul class="problems" id="show-problems"></ul>
+        <p class="admin-where" id="show-status"></p></div>
+      <div class="card admin-code"><details><summary class="admin-code-head"><p class="eyebrow">Or paste into data/shows.js by hand</p><span class="btnrow"><a class="btn ghost small" id="logo-download" hidden download>Download logo</a><button type="button" class="btn small" id="show-copy">Copy</button></span></summary>
         <p class="admin-where" id="show-where"></p>
-        <pre id="show-code"></pre></div>
+        <pre id="show-code"></pre></details></div>
     </div></div>`
   });
 
-  const form = document.getElementById("show-form"), code = document.getElementById("show-code"), probs = document.getElementById("show-problems"), where = document.getElementById("show-where");
+  const form = document.getElementById("show-form"), code = document.getElementById("show-code"), probs = document.getElementById("show-problems"), where = document.getElementById("show-where"), status = document.getElementById("show-status");
   const preview = document.getElementById("brand-preview"), logoMeta = document.getElementById("logo-meta"), logoPath = document.getElementById("logo-path"), logoClear = document.getElementById("logo-clear"), logoDownload = document.getElementById("logo-download");
   let logoError = "";
 
@@ -393,6 +364,7 @@ function renderShowEditor(id) {
     logoDownload.hidden = !logoData;
     if (logoData) { logoDownload.href = logoData.dataUrl; logoDownload.download = file; }
     preview.innerHTML = brandPreview(s, logoData ? logoData.dataUrl : null);
+    if (!status.classList.contains("ok") && !status.classList.contains("bad")) status.textContent = logoData ? `Commits the logo as ${s.logo || "assets/shows/<id>.<ext>"} and data/shows.js to main in one commit, as you.` : `Commits data/shows.js to main as you.`;
   }
   form.oninput = ev => {
     if (ev.target.name === "colorpick") form.color.value = ev.target.value.toUpperCase();
@@ -410,8 +382,17 @@ function renderShowEditor(id) {
   };
   form.onsubmit = ev => ev.preventDefault();
   logoClear.onclick = () => { logoData = null; logoError = ""; form.logofile.value = ""; update(); };
-  document.getElementById("show-copy").onclick = ev => copyText(code.textContent, ev.currentTarget);
+  document.getElementById("show-copy").onclick = ev => { ev.preventDefault(); copyText(code.textContent, ev.currentTarget); };
   document.getElementById("show-clear").onclick = () => { clearDraft("show", id); renderShowEditor(id); };
+  wireSave(document.getElementById("show-save"), status, async () => {
+    const { s } = currentShow();
+    if (validateShow(s, id).length || logoError) throw new Error("fix the problems listed above first.");
+    const r = logoData
+      ? await apiPost("/save/logo", { show: s, editingId: id || null, logo: { ext: logoData.ext, dataUrl: logoData.dataUrl } })
+      : await apiPost("/save/show", { show: s, editingId: id || null });
+    clearDraft("show", id); logoData = null; form.logofile.value = ""; logoClear.hidden = true; logoDownload.hidden = true;
+    return r;
+  });
   update();
 }
 
@@ -427,16 +408,25 @@ function renderShowsAdmin() {
   });
 }
 
-/* ---------- transcripts status (read only) ---------- */
-// Transcripts are fetched on GitHub by tools/fetch-transcripts.js whenever data/episodes.js changes on main.
-// This page only reads data/transcript-status.json; nothing here calls the transcript API.
+/* ---------- transcripts status ---------- */
+// Transcripts are fetched on GitHub by tools/fetch-transcripts.js whenever data/episodes.js changes on main, daily,
+// or when Run now asks the Worker to dispatch the workflow. This page reads data/transcript-status.json; the browser
+// never calls the transcript API itself.
 function renderTranscriptsAdmin() {
   adminShell({
     title: "Transcripts",
-    sub: `Fetching runs on GitHub (the Transcripts workflow) when <code>data/episodes.js</code> changes on main, or from the Run workflow button. Nothing on this page calls the API. Episodes that already have a file are never fetched again.`,
-    form: `<div class="admin-stats" id="tx-stats"><span class="eyebrow">Loading status…</span></div><div class="card admin-table"><table id="tx-table"><thead><tr><th>Episode</th><th>Status</th><th>Checked</th><th>Credits</th></tr></thead><tbody></tbody></table></div>`
+    sub: `Fetching and show notes run on GitHub (the Transcripts workflow) when <code>data/episodes.js</code> changes on main, once a day, or from Run now. Episodes that already have a file are never fetched again.`,
+    form: `<div class="admin-stats" id="tx-stats"><span class="eyebrow">Loading status…</span></div>
+      <div class="admin-actions" style="border:0;padding:0 0 16px"><button type="button" class="btn small" id="tx-run">Run now</button><span class="admin-where" id="tx-run-status">Starts the Transcripts workflow on GitHub for every episode without a transcript.</span></div>
+      <div class="card admin-table"><table id="tx-table"><thead><tr><th>Episode</th><th>Status</th><th>Checked</th><th>Credits</th></tr></thead><tbody></tbody></table></div>`
   });
   const stats = document.getElementById("tx-stats"), body = document.querySelector("#tx-table tbody");
+  const runBtn = document.getElementById("tx-run"), runStatus = document.getElementById("tx-run-status");
+  runBtn.onclick = async () => {
+    runBtn.disabled = true; runStatus.textContent = "Starting…";
+    try { const r = await apiPost("/import/run", { workflow: "transcripts" }); runStatus.innerHTML = `Started. Watch it under <a href="${esc(r.url)}" target="_blank" rel="noopener">Actions</a>; this page updates once it commits.`; }
+    catch (err) { runStatus.textContent = "Not started: " + err.message; runBtn.disabled = false; }
+  };
   const label = { ok: "ok", no_captions: "no captions", credits_exhausted: "credits exhausted", error: "error" };
   const fmt = iso => iso ? new Date(iso).toLocaleString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" }) : "";
   (location.protocol === "file:" ? Promise.resolve(null) : transcriptStatus()).then(st => {

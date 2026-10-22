@@ -1,0 +1,15 @@
+# Cloudflare Worker "podcast-app": the write backend for the Keystone Listens admin.
+# Deployed by .github/workflows/deploy-worker.yml on every push to main that touches worker/.
+# Secrets (set in the Cloudflare dashboard, never here): GITHUB_TOKEN, GITHUB_CLIENT_ID, GITHUB_CLIENT_SECRET,
+# ADMIN_GITHUB_USERS (comma separated GitHub logins), SESSION_SECRET.
+name = "podcast-app"
+main = "src/index.js"
+compatibility_date = "2026-09-01"
+
+[vars]
+SITE_ORIGIN = "https://gdgsocialphantom.github.io"
+SITE_URL = "https://gdgsocialphantom.github.io/Podcast_app/"
+REPO = "GDGsocialphantom/Podcast_app"
+BRANCH = "main"
+SESSION_DAYS = "7"
+WRITES_PER_HOUR = "30"

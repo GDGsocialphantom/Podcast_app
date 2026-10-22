@@ -1,0 +1,14 @@
+{
+  "name": "keystone-listens-worker",
+  "private": true,
+  "type": "module",
+  "description": "Cloudflare Worker backend for the Keystone Listens admin (see wrangler.toml)",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "check": "wrangler deploy --dry-run --outdir=dist"
+  },
+  "devDependencies": {
+    "wrangler": "^4.40.0"
+  }
+}
