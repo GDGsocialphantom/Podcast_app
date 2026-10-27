@@ -148,9 +148,14 @@ async function importRun(request, env, user) {
   return json({ ok: true, workflow: file, url: d.url, by: user.login });
 }
 
+// Public settings come from wrangler.toml [vars]; these defaults make the bundled file work when pasted into the
+// Cloudflare dashboard editor with only the five secrets set.
+const DEFAULTS = { SITE_ORIGIN: "https://gdgsocialphantom.github.io", SITE_URL: "https://gdgsocialphantom.github.io/Podcast_app/", REPO: "GDGsocialphantom/Podcast_app", BRANCH: "main", SESSION_DAYS: "7", WRITES_PER_HOUR: "30" };
+
 /* ---------- router ---------- */
 export default {
-  async fetch(request, env) {
+  async fetch(request, rawEnv) {
+    const env = { ...DEFAULTS, ...rawEnv };
     const url = new URL(request.url);
     const h = cors(env, request);
     if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: h });
