@@ -13,32 +13,28 @@
 
 </head>
 <body>
-<header class="topnav" id="topnav">
-  <div class="wrap">
-    <a class="brand" href="#home" aria-label="Keystone Listens home"><span class="wordmark">Keystone Listens</span></a>
-    <a class="chip show navshow" id="navshow" href="#home" hidden></a>
-    <button class="burger" id="burger" type="button" aria-label="Menu" aria-expanded="false" aria-controls="menu"><span></span><span></span><span></span></button>
-    <div class="menu" id="menu">
-      <nav class="nav" id="nav">
-        <a href="#home">Episodes</a>
-        <div class="dd" id="shows-dd">
-          <button type="button" class="dd-btn" aria-haspopup="true" aria-expanded="false">Shows <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
-          <div class="dd-menu" id="shownav"></div>
-        </div>
-        <a href="#find">Find an episode</a>
-        <a href="#about">About</a>
-      </nav>
-      <div class="navright">
-        <div class="acct" id="acct"></div>
-        <a class="iconbtn" href="#find" aria-label="Search episodes"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></a>
-      </div>
-    </div>
+<div class="shell">
+<aside class="side" id="side">
+  <div class="sidehead">
+    <a class="brand" href="#home"><svg class="mark" viewBox="0 0 32 32" aria-hidden="true"><path d="M6 4 L14 16 L6 28" fill="none" stroke="#BFD730" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/><path d="M26 4 L18 16 L26 28" fill="none" stroke="#76CED9" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="word">Keystone<small>Listens</small></span></a>
+    <button class="burger" id="burger" type="button" aria-label="Menu" aria-expanded="false" aria-controls="sidemenu"><span></span><span></span><span></span></button>
   </div>
-</header>
-<div class="adminbar" id="adminbar" hidden><div class="wrap"><strong>Admin</strong><a href="#admin-new-episode">Add episode</a><a href="#admin-shows">Edit shows</a><a href="#admin-transcripts">Transcripts</a><span class="note">Saves commit to GitHub; the site updates a minute or two later.</span></div></div>
-
+  <div class="sidemenu" id="sidemenu">
+    <div class="label">Browse</div>
+    <nav class="nav" id="nav">
+      <a href="#home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8v9a2 2 0 0 1-2 2h-4v-6h-6v6H5a2 2 0 0 1-2-2z"/></svg><span class="txt">Episodes</span></a>
+      <a href="#find"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg><span class="txt">Find an episode</span></a>
+      <a href="#about"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg><span class="txt">Shows</span></a>
+    </nav>
+    <div class="label">Shows</div>
+    <nav class="nav shows" id="shownav"></nav>
+    <div class="spacer"></div>
+    <div class="acct" id="acct"></div>
+  </div>
+</aside>
+<div class="main">
+<div class="adminbar" id="adminbar" hidden><div class="wrap"><strong>Admin mode</strong><a href="#admin-new-episode">Add episode</a><a href="#admin-shows">Edit shows</a><a href="#admin-transcripts">Transcripts</a><span class="note">Saves commit to GitHub; the site updates a minute or two later.</span></div></div>
 <main class="wrap" id="app"></main>
-
 <footer class="site-footer">
   <div class="wrap">
     <div class="fcols">
@@ -50,6 +46,8 @@
     <p class="fline">Keystone Innovation District · 800 E 18th St, Kansas City, MO · New episodes weekly across four shows</p>
   </div>
 </footer>
+</div>
+</div>
 
 <!-- Load order matters: data first, then the shared rules, then the auth provider and auth, then the admin editor, then the app (which routes on load). -->
 <script src="data/shows.js"></script>
@@ -60,13 +58,11 @@
 <script src="js/admin.js"></script>
 <script src="js/app.js"></script>
 <script>
-// Top nav behavior only: hamburger on phones, the Shows dropdown, closing both after navigation, and the footer show links.
+// Sidebar behavior only: on phones the sidebar is a top bar and the hamburger opens the menu; it closes after navigation. Plus the footer show links.
 (function () {
-  var burger = document.getElementById("burger"), menu = document.getElementById("menu"), dd = document.getElementById("shows-dd"), ddBtn = dd.querySelector(".dd-btn");
-  burger.onclick = function () { var open = menu.classList.toggle("open"); burger.setAttribute("aria-expanded", open); };
-  ddBtn.onclick = function (ev) { ev.stopPropagation(); var open = dd.classList.toggle("open"); ddBtn.setAttribute("aria-expanded", open); };
-  document.addEventListener("click", function (ev) { if (!dd.contains(ev.target)) { dd.classList.remove("open"); ddBtn.setAttribute("aria-expanded", "false"); } });
-  window.addEventListener("hashchange", function () { menu.classList.remove("open"); burger.setAttribute("aria-expanded", "false"); dd.classList.remove("open"); ddBtn.setAttribute("aria-expanded", "false"); });
+  var burger = document.getElementById("burger"), side = document.getElementById("side");
+  burger.onclick = function () { var open = side.classList.toggle("open"); burger.setAttribute("aria-expanded", open); };
+  window.addEventListener("hashchange", function () { side.classList.remove("open"); burger.setAttribute("aria-expanded", "false"); });
   document.getElementById("footer-shows").innerHTML = SHOWS.map(function (s) { return '<a href="#show-' + s.id + '">' + esc(s.name) + '</a>'; }).join("");
 })();
 </script>

@@ -1,12 +1,12 @@
-/* Auth UI: account area in the top nav, login card, admin strip and edit buttons. Uses the tokens from css/site.css. */
-.login { max-width: 440px; margin: 48px auto; padding: 32px; display: grid; gap: 18px; text-align: center; }
-.login h1 { font-size: 28px; }
-.login .sub { color: var(--muted); font-size: 15px; margin: 8px 0 0; }
+/* Auth UI: account chip in the sidebar, login card, admin strip and edit buttons. Uses the Keynect tokens from css/site.css. */
+.login { max-width: 440px; margin: 48px auto; padding: 28px; display: grid; gap: 16px; text-align: center; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); border-top: 6px solid var(--primary); }
+.login h1 { font-size: 22px; }
+.login .sub { color: var(--muted); font-size: 14px; margin: 6px 0 0; }
 .login label { display: grid; gap: 6px; font-size: 13.5px; font-weight: 500; text-align: left; }
-.login input { border: 1.5px solid var(--line); background: #fff; color: var(--ink); font: inherit; padding: 10px 14px; border-radius: 10px; }
+.login input { border: 1px solid var(--line); background: var(--surface); color: var(--ink); font: inherit; padding: 9px 12px; border-radius: 6px; }
 .login .btn { width: 100%; }
-.login .err { color: #DC2626; font-size: 14px; margin: 0; }
-.login-logo { display: flex; justify-content: center; align-items: center; gap: 10px; margin: 32px 0 -32px; font-weight: 600; font-size: 20px; letter-spacing: -.02em; }
-.login-logo .mark { width: 28px; height: 28px; }
-.editbtn { font-size: 12px; font-weight: 600; border: 1.5px solid var(--line); color: var(--ink); background: #fff; border-radius: 999px; padding: 5px 12px; text-decoration: none; white-space: nowrap; }
-.editbtn:hover { border-color: var(--accent); color: var(--accent-deep); }
+.login .err { color: #DC2626; font-size: 13.5px; margin: 0; }
+.login-logo { display: flex; justify-content: center; align-items: center; gap: 10px; margin: 24px 0 -40px; font-weight: 800; font-size: 20px; letter-spacing: .04em; text-transform: uppercase; }
+.login-logo .mark { width: 32px; height: 32px; }
+.editbtn { font-size: 12px; font-weight: 600; border: 1px solid var(--line); color: var(--ink); background: var(--surface); border-radius: 6px; padding: 5px 12px; text-decoration: none; white-space: nowrap; }
+.editbtn:hover { border-color: var(--primary); }

@@ -1,4 +1,4 @@
-/* Admin editor (js/admin.js): episode and show forms with a live code output. Uses the site tokens from css/site.css (white page, #111 text, sky-blue accent). */
+/* Admin editor (js/admin.js): episode and show forms with a live code output. Uses the Keynect tokens from css/site.css. */
 .admin { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; align-items: start; }
 .admin-form { padding: 22px; display: grid; gap: 14px; }
 .admin-form .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
