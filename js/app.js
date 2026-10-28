@@ -14,6 +14,15 @@ const initials = n => n.replace(/^(Judge|Dr\.)\s+/, "").split(" ").filter(Boolea
 const yt = (id, t) => `https://www.youtube.com/watch?v=${id}${t ? "&t=" + t + "s" : ""}`;
 const ytThumb = id => `https://i.ytimg.com/vi/${id}/maxresdefault.jpg`; // YouTube's og:image; hqdefault.jpg is the fallback if the video has no HD thumbnail
 const sorted = () => [...EPISODES].sort((a, b) => b.date.localeCompare(a.date));
+// Every show-scoped list goes through this one helper (feeds and embeds will read per show the same way). Null = whole network.
+const episodesFor = showId => showId ? sorted().filter(e => e.show === showId) : sorted();
+// A show's color as the page accent: pills, chips, tabs and links on that show's pages pick it up through the CSS variables.
+const scopeVars = s => `--accent:${s.color};--accent-ink:${s.ink || "#fff"};--accent-deep:color-mix(in srgb, ${s.color} 72%, #111);--accent-tint:color-mix(in srgb, ${s.color} 14%, white);${showVars(s)}`;
+// Nav chip next to the wordmark: shows which show's pages you are on. Null clears it.
+function setContext(show) {
+  const c = document.getElementById("navshow"); if (!c) return;
+  if (show) { c.hidden = false; c.href = "#show-" + show.id; c.textContent = show.name; c.style.cssText = showVars(show); } else { c.hidden = true; }
+}
 
 // Show logo tile: the real logo when assets/shows/<id>.png exists, otherwise a monogram in the brand color.
 const showVars = s => `--show:${s.color};--show-ink:${s.ink || "#fff"}`;
@@ -81,61 +90,52 @@ const TILE_ICONS = {
   "Kansas City": `<path d="M12 21s-7-6.5-7-12a7 7 0 0 1 14 0c0 5.5-7 12-7 12z"/><circle cx="12" cy="9" r="2.5"/>`
 };
 const tileIcon = name => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${TILE_ICONS[name] || `<circle cx="12" cy="12" r="9"/><path d="M8 12h8"/>`}</svg>`;
-function topTopics(n) {
+function topTopics(n, showId = null) {
+  const pool = episodesFor(showId);
   return Object.keys(TOPIC_MAP).map(k => {
     const set = new Set(TOPIC_MAP[k]);
-    return { k, count: EPISODES.filter(e => e.topics.some(t => set.has(t))).length };
+    return { k, count: pool.filter(e => e.topics.some(t => set.has(t))).length };
   }).filter(x => x.count).sort((a, b) => b.count - a.count || a.k.localeCompare(b.k)).slice(0, n);
 }
 const heroCover = `<div class="cover"><div class="cover-mark"><span class="wm">Keystone<br>Listens</span><small>Kansas City</small></div></div>`;
 
-/* ---------- home ---------- */
-let filter = "all";
-const HOME_PAGE = 15;      // episodes shown in the All episodes list before "Show more"
-let homeLimit = HOME_PAGE;
-let revealAll = false;     // the All episodes list opens after "Discover all episodes" (or #all-episodes)
+/* ---------- home: the network landing ---------- */
 function renderHome() {
-  const all = sorted();
-  const latest = all[0];
-  const flagged = all.filter(e => e.featured === true);
-  const featured = (flagged.length ? flagged : all.filter(e => e !== latest)).slice(0, 3);
-  const recent = all.slice(0, 8);
-  const list = all.filter(e => filter === "all" || e.show === filter);
-  const shown = list.slice(0, homeLimit);
-  const tiles = topTopics(8);
-  const first = SHOWS[0] || {};
+  const latest = episodesFor(null).slice(0, 4);
   app.innerHTML = `
-  <section class="hero">
+  <section class="hero compact">
     ${heroCover}
     <div><h1>Keystone Listens</h1>
-      <p class="blurb">Conversations with the founders, builders and civic leaders shaping Kansas City, from the Keystone Innovation District and the shows recorded there.</p>
-      <p class="sub">New episodes weekly across four shows</p>
-      ${platformPills({ youtube: first.youtube, apple: first.apple, spotify: first.spotify })}</div>
+      <p class="blurb">The podcasts of the Keystone Innovation District: founders, builders and civic leaders shaping Kansas City, each show with its own home.</p>
+      <p class="sub">${SHOWS.length} shows · new episodes weekly</p>
+      <div class="platforms"><a class="pill" href="#all-episodes">All episodes</a><a class="pill light" href="#find">Find an episode</a></div></div>
   </section>
-  <section class="section search"><h2>Looking for something specific?</h2>
-    <form class="searchbar" id="home-search" role="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
-      <input type="search" name="q" placeholder="Search episodes by topic, guest or keyword" aria-label="Search episodes"><button class="btn" type="submit">Search</button></form></section>
-  <section class="section"><div class="section-head"><h2>Browse by topic</h2><a class="pill" href="#find">Explore all topics</a></div>
-    <div class="tiles">${tiles.map(t => `<a class="tile" href="#find" data-topic="${esc(t.k)}">${tileIcon(t.k)}<span><b>${esc(t.k)}</b><small>${t.count} episode${t.count === 1 ? "" : "s"}</small></span></a>`).join("")}</div></section>
-  ${latest ? `<section class="section"><div class="section-head"><h2>Latest episode</h2></div>
-    <a class="latest" href="#${latest.id}" style="${showVars(showById(latest.show))}"><span class="thumb">${thumbImg(latest.youtube, "maxresdefault")}</span>
-      <div><div class="meta">${showChip(showById(latest.show), false)}<span>${fmtDate(latest.date)}</span><span class="dur">${fmtDur(latest.duration)}</span></div>
-        <h3>${esc(latest.title)}</h3><p class="sum">${esc(latest.summary)}</p><span class="pill">Watch now</span></div></a></section>` : ""}
-  ${featured.length ? `<section class="section"><div class="section-head"><h2>Featured episodes</h2></div><div class="grid c3">${featured.map(e => epCard(e)).join("")}</div></section>` : ""}
-  <section class="section"><div class="section-head"><h2>Recent episodes</h2></div>
-    ${recent.length ? `<div class="grid c4">${recent.map(e => epCard(e)).join("")}</div>` : `<p class="empty">No episodes yet. The first one is coming soon.</p>`}
-    <div class="section-foot" id="discover-row" ${revealAll ? "hidden" : ""}><button class="pill" id="discover" type="button">Discover all episodes</button></div></section>
-  <section class="section" id="all-episodes" ${revealAll ? "" : "hidden"}>
-    <div class="section-head"><h2>All episodes</h2>
+  <section class="section"><div class="section-head"><h2>The shows</h2></div>
+    <div class="showgrid">${SHOWS.map(s => {
+      const n = episodesFor(s.id).length;
+      return `<a class="showcard" href="#show-${s.id}" style="${scopeVars(s)}"><span class="cover">${showLogo(s, "lg")}</span>
+        <div><h3>${esc(s.name)}</h3><p>${esc(s.tagline)}</p><span class="count">${n ? `${n} episode${n === 1 ? "" : "s"}` : "First episode coming soon"}</span><span class="pill">Go to show</span></div></a>`; }).join("")}</div></section>
+  ${latest.length ? `<section class="section"><div class="section-head"><h2>Latest across the network</h2><a class="pill light" href="#all-episodes">All episodes</a></div>
+    <div class="grid c4">${latest.map(e => epCard(e)).join("")}</div></section>` : ""}`;
+  setContext(null);
+  setNav("#home");
+}
+
+/* ---------- all episodes: the network feed with show filter chips ---------- */
+let filter = "all";
+const HOME_PAGE = 16;
+let homeLimit = HOME_PAGE;
+function renderAll() {
+  const list = episodesFor(filter === "all" ? null : filter);
+  const shown = list.slice(0, homeLimit);
+  app.innerHTML = `
+  <section class="section" id="all-episodes">
+    <div class="section-head"><div><h1 class="h2">All episodes</h1><p>Every episode across the network, newest first.</p></div>
       <div class="filters">${[["all", "All shows"], ...SHOWS.map(s => [s.id, s.name])].map(([id, n]) => `<button class="chip" data-filter="${id}" aria-pressed="${filter === id}">${esc(n)}</button>`).join("")}</div></div>
     <div class="grid c4" id="home-list">${list.length ? shown.map(e => epCard(e)).join("") : `<p class="empty">No episodes yet for ${esc((showById(filter) || { name: "this show" }).name)}. First one is coming soon.</p>`}</div>
     ${list.length > shown.length ? `<div class="more-row"><button class="btn ghost" id="home-more">Show more</button><span class="eyebrow">${shown.length} of ${list.length} episodes</span></div>` : ""}
   </section>`;
-  document.getElementById("home-search").onsubmit = ev => { ev.preventDefault(); openFind(ev.target.q.value.trim()); };
-  app.querySelectorAll(".tile[data-topic]").forEach(t => t.onclick = ev => { ev.preventDefault(); openFind("", [t.dataset.topic]); });
-  const disc = document.getElementById("discover");
-  if (disc) disc.onclick = () => { revealAll = true; document.getElementById("discover-row").hidden = true; const sec = document.getElementById("all-episodes"); sec.hidden = false; sec.scrollIntoView({ behavior: "smooth", block: "start" }); };
-  app.querySelectorAll("[data-filter]").forEach(b => b.onclick = () => { filter = b.dataset.filter; homeLimit = HOME_PAGE; revealAll = true; renderHome(); document.getElementById("all-episodes").scrollIntoView({ block: "start" }); });
+  app.querySelectorAll("[data-filter]").forEach(b => b.onclick = () => { filter = b.dataset.filter; homeLimit = HOME_PAGE; renderAll(); });
   const more = document.getElementById("home-more");
   if (more) more.onclick = () => {   // append the next page in place so the scroll position holds
     const next = list.slice(homeLimit, homeLimit + HOME_PAGE);
@@ -144,12 +144,13 @@ function renderHome() {
     const row = more.parentNode;
     if (homeLimit >= list.length) row.remove(); else row.querySelector(".eyebrow").textContent = `${Math.min(homeLimit, list.length)} of ${list.length} episodes`;
   };
-  setNav("#home");
+  setContext(null);
+  setNav("#all-episodes");
 }
-// Open Find with a query and/or topics prefilled; runs the match when there is anything to match on.
+// Open Find with a query, topics and/or a show prefilled; runs the match when there is anything to match on.
 let findAuto = false;
-function openFind(q, topics) {
-  prefs = { ...prefs, free: q || "", topics: topics || [] };
+function openFind(q, topics, showId) {
+  prefs = { ...prefs, free: q || "", topics: topics || [], show: showId || "any" };
   findAuto = !!(q || (topics && topics.length));
   if (location.hash === "#find") { renderFind(findAuto); findAuto = false; } else location.hash = "#find";
 }
@@ -209,23 +210,25 @@ function renderFind(showResults) {
   const tile = v => `<label class="tile"><input type="checkbox" name="topics" value="${esc(v)}" id="topics-${v.replace(/\W/g, "")}" ${prefs.topics.includes(v) ? "checked" : ""}>${tileIcon(v)}<b>${esc(v)}</b></label>`;
   let results = "";
   if (showResults) {
-    const ranked = EPISODES.map(e => ({ e, ...score(e) })).filter(r => r.pts > 0).sort((a, b) => b.pts - a.pts || b.e.date.localeCompare(a.e.date)).slice(0, 6);
+    const ranked = episodesFor(prefs.show !== "any" ? prefs.show : null).map(e => ({ e, ...score(e) })).filter(r => r.pts > 0).sort((a, b) => b.pts - a.pts || b.e.date.localeCompare(a.e.date)).slice(0, 6);
     results = `<section id="results"><div class="results-head"><h2>${ranked.length ? "Your picks" : "Nothing matched everything"}</h2><span class="eyebrow">${ranked.length} episode${ranked.length === 1 ? "" : "s"}</span></div>
       ${ranked.length ? `<div class="grid c3">${ranked.map(r => epCard(r.e, "Match: " + (r.why.join(" · ") || "recent"))).join("")}</div>` : `<p class="empty">Try fewer topics or set the time window to "Any length".</p>`}</section>`;
   }
-  app.innerHTML = `<div class="findpage">
-  <header><h1>Find an episode</h1><p>Tell us what you want to hear and we will pick from every show.</p></header>
+  const scope = prefs.show !== "any" ? showById(prefs.show) : null;
+  app.innerHTML = `<div class="findpage" ${scope ? `style="${scopeVars(scope)}"` : ""}>
+  <header><h1>Find an episode</h1><p>Tell us what you want to hear${scope ? ` from ${esc(scope.name)}` : " and we will pick from every show"}.</p></header>
   <form class="form-card" id="find-form">
+    <fieldset class="showsel"><legend class="sr">Which show</legend><div class="choices">${[["any", "All shows"], ...SHOWS.map(s => [s.id, s.name])].map(([v, l]) => chk("show", v, l)).join("")}</div></fieldset>
     <div class="searchbar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
       <input type="search" name="free" id="free" value="${esc(prefs.free)}" placeholder="Search by topic, guest or keyword" aria-label="Search"><button class="btn" type="submit">Search</button></div>
     <fieldset><legend>Topics you're interested in</legend><div class="choices tiles">${TOPICS.map(tile).join("")}</div></fieldset>
     <fieldset><legend>How much time do you have?</legend><div class="choices">${[["any", "Any length"], ["short", "Under 25 min"], ["medium", "25 to 50 min"], ["long", "Over 50 min"]].map(([v, l]) => chk("time", v, l)).join("")}</div></fieldset>
     <fieldset><legend>How do you like to listen?</legend><div class="choices">${[["any", "Doesn't matter"], ["Interview", "One-on-one interview"], ["Panel", "Group conversation"], ["Solo", "Solo host"], ["Talk", "Live talk"]].map(([v, l]) => chk("format", v, l)).join("")}</div></fieldset>
-    <fieldset><legend>Any particular show?</legend><div class="choices">${[["any", "Any show"], ...SHOWS.map(s => [s.id, s.name])].map(([v, l]) => chk("show", v, l)).join("")}</div></fieldset>
     <div><button class="btn" type="submit">Show me episodes</button></div>
   </form>
   ${results}</div>`;
   const form = document.getElementById("find-form");
+  form.querySelectorAll('input[name="show"]').forEach(r => r.onchange = () => { prefs = { ...prefs, show: r.value }; renderFind(false); });  // re-render so the page takes the show's color
   form.onsubmit = ev => {
     ev.preventDefault();
     const fd = new FormData(form);
@@ -234,6 +237,7 @@ function renderFind(showResults) {
     document.getElementById("results").scrollIntoView({ behavior: "smooth", block: "start" });
   };
   if (showResults && document.getElementById("results") && findAuto) document.getElementById("results").scrollIntoView({ block: "start" });
+  setContext(scope);
   setNav("#find");
 }
 
@@ -242,22 +246,46 @@ const SHOW_PAGE = 12;
 let showLimit = SHOW_PAGE;
 function renderShow(id) {
   const s = showById(id); if (!s) return renderHome();
-  const list = sorted().filter(e => e.show === id);
+  const list = episodesFor(id);
+  const latest = list[0];
+  const flagged = list.filter(e => e.featured === true);
+  const featured = (flagged.length ? flagged : list.filter(e => e !== latest)).slice(0, 3);
   const shown = list.slice(0, showLimit);
-  app.innerHTML = `
-  <section class="hero showhero" style="${showVars(s)}">
+  const tiles = topTopics(8, id);
+  const hero = `
+  <section class="hero showhero">
     <div class="cover">${showLogo(s, "lg")}</div>
-    <div><div class="chipline">${showChip(s)}<span class="chip type">${esc(s.org)}</span>${isAdmin() ? `<a class="editbtn" href="#admin-edit-show-${s.id}">Edit show</a>` : ""}</div>
+    <div><div class="chipline"><span class="chip type">${esc(s.org)}</span>${isAdmin() ? `<a class="editbtn" href="#admin-edit-show-${s.id}">Edit show</a>` : ""}</div>
       <h1>${esc(s.name)}</h1>
       <p class="blurb">${esc(s.tagline)}</p>
       <p class="sub">${esc(s.about)}</p>
-      ${platformPills(s)}
-      <p class="hosts">Hosted by ${esc(s.hosts.join(", "))} · ${list.length} episode${list.length === 1 ? "" : "s"}</p></div>
-  </section>
-  <section class="section"><div class="section-head"><h2>Recent episodes</h2></div>
-    ${list.length ? `<div class="grid c4" id="show-list">${shown.map(e => epCard(e)).join("")}</div>` : `<p class="empty">No episodes yet. The first one is coming soon.</p>`}
-    ${list.length > shown.length ? `<div class="more-row"><button class="btn ghost" id="show-more">Show more</button><span class="eyebrow">${shown.length} of ${list.length} episodes</span></div>` : ""}
+      <p class="hosts">Hosted by ${esc(s.hosts.join(", "))}${s.cadence ? ` · ${esc(s.cadence)}` : ""}${list.length ? ` · ${list.length} episode${list.length === 1 ? "" : "s"}` : ""}</p>
+      ${platformPills(s)}</div>
   </section>`;
+  if (!list.length) {
+    app.innerHTML = `<div class="showpage" style="${scopeVars(s)}">${hero}
+      <section class="section soon"><h2>First episode coming soon</h2><p>${esc(s.name)} is getting ready to launch. Follow on the platforms above and it will show up here the day it drops.</p>
+        <a class="pill light" href="#home">Browse the other shows</a></section></div>`;
+    setContext(s); setNav("#show-" + id); return;
+  }
+  app.innerHTML = `<div class="showpage" style="${scopeVars(s)}">${hero}
+  <section class="section search"><h2>Looking for something specific?</h2>
+    <form class="searchbar" id="show-search" role="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+      <input type="search" name="q" placeholder="Search ${esc(s.name)} by topic, guest or keyword" aria-label="Search ${esc(s.name)}"><button class="btn" type="submit">Search</button></form></section>
+  ${tiles.length ? `<section class="section"><div class="section-head"><h2>Browse by topic</h2><a class="pill" href="#find" id="show-find">Explore all topics</a></div>
+    <div class="tiles">${tiles.map(t => `<a class="tile" href="#find" data-topic="${esc(t.k)}">${tileIcon(t.k)}<span><b>${esc(t.k)}</b><small>${t.count} episode${t.count === 1 ? "" : "s"}</small></span></a>`).join("")}</div></section>` : ""}
+  <section class="section"><div class="section-head"><h2>Latest episode</h2></div>
+    <a class="latest" href="#${latest.id}"><span class="thumb">${thumbImg(latest.youtube, "maxresdefault")}</span>
+      <div><div class="meta">${showChip(s, false)}<span>${fmtDate(latest.date)}</span><span class="dur">${fmtDur(latest.duration)}</span></div>
+        <h3>${esc(latest.title)}</h3><p class="sum">${esc(latest.summary)}</p><span class="pill">Watch now</span></div></a></section>
+  ${featured.length ? `<section class="section"><div class="section-head"><h2>Featured episodes</h2></div><div class="grid c3">${featured.map(e => epCard(e)).join("")}</div></section>` : ""}
+  <section class="section"><div class="section-head"><h2>Recent episodes</h2></div>
+    <div class="grid c4" id="show-list">${shown.map(e => epCard(e)).join("")}</div>
+    ${list.length > shown.length ? `<div class="more-row"><button class="btn ghost" id="show-more">Show more</button><span class="eyebrow">${shown.length} of ${list.length} episodes</span></div>` : ""}
+  </section></div>`;
+  document.getElementById("show-search").onsubmit = ev => { ev.preventDefault(); openFind(ev.target.q.value.trim(), [], id); };
+  document.getElementById("show-find").onclick = ev => { ev.preventDefault(); openFind("", [], id); };
+  app.querySelectorAll(".tile[data-topic]").forEach(t => t.onclick = ev => { ev.preventDefault(); openFind("", [t.dataset.topic], id); });
   const more = document.getElementById("show-more");
   if (more) more.onclick = () => {
     const next = list.slice(showLimit, showLimit + SHOW_PAGE);
@@ -266,6 +294,7 @@ function renderShow(id) {
     const row = more.parentNode;
     if (showLimit >= list.length) row.remove(); else row.querySelector(".eyebrow").textContent = `${Math.min(showLimit, list.length)} of ${list.length} episodes`;
   };
+  setContext(s);
   setNav("#show-" + id);
 }
 
@@ -279,6 +308,7 @@ function renderAbout() {
     <div class="showlist">${SHOWS.map(s => `<a href="#show-${s.id}" style="${showVars(s)}">${showLogo(s, "sm")}<span><b>${esc(s.name)}</b><small>${esc(s.tagline)}</small></span></a>`).join("")}</div>
     <p>Keystone Innovation District · 800 E 18th St, Kansas City, MO</p>
   </div>`;
+  setContext(null);
   setNav("#about");
 }
 
@@ -302,7 +332,7 @@ function renderEpisode(e) {
     : `<a class="video" href="${yt(e.youtube)}" target="_blank" rel="noopener"><img class="thumb" src="${ytThumb(e.youtube)}" alt="" onerror="if(!this.dataset.hq){this.dataset.hq=1;this.src='https://i.ytimg.com/vi/${e.youtube}/hqdefault.jpg'}else{this.remove()}"><span class="pb"><svg width="30" height="30" viewBox="0 0 24 24" fill="#fff"><path d="M8 5v14l11-7z"/></svg></span><span class="cap">Watch on YouTube · ${fmtDur(e.duration)}</span></a>`;
   const n = e.notes || {}, has = a => Array.isArray(a) && a.length > 0; // notes and each section are optional (see tools/check-data.js)
   const cueHTML = c => `<div class="cue" data-text="${esc(c.x.toLowerCase())}"><a class="t" href="${yt(e.youtube, c.t)}" target="_blank" rel="noopener" title="Open the video at ${ts(c.t)}">${ts(c.t)}</a><span class="sp">${esc(c.s)}</span><p>${esc(c.x)}</p></div>`;
-  app.innerHTML = `<article class="epage" style="${showVars(s)}">
+  app.innerHTML = `<article class="epage" style="${scopeVars(s)}">
     <a class="back" href="#show-${s.id}">← ${esc(s.name)}</a>
     <div class="meta">${showChip(s)}<span class="chip type">${esc(e.format)}</span><span>${fmtDate(e.date)}</span><span class="dur">${fmtDur(e.duration)}</span></div>
     <div class="ep-title-row"><h1>${esc(e.title)}</h1>${isAdmin() ? `<a class="editbtn" href="#admin-edit-${e.id}">Edit episode</a>` : ""}</div>
@@ -355,7 +385,8 @@ function renderEpisode(e) {
       if (mine && (mine.status === "no_captions" || mine.status === "credits_exhausted") && location.hash.slice(1) === e.id) tx.innerHTML = `<p class="tx-empty">No transcript available for this episode.</p>`;
     });
   }).catch(err => console.warn("transcript: could not load " + txUrl, err));
-  setNav(null);
+  setContext(s);
+  setNav("#show-" + s.id);
   window.scrollTo({ top: 0 });
 }
 
@@ -369,6 +400,7 @@ function transcriptStatus() {   // data/transcript-status.json, fetched once per
 function setNav(h) { document.querySelectorAll("#nav a, #shownav a").forEach(a => a.getAttribute("href") === h ? a.setAttribute("aria-current", "page") : a.removeAttribute("aria-current")); }
 function route() {
   const h = (location.hash || "#home").slice(1);
+  if (h === "login" || h.startsWith("admin-")) setContext(null);
   if (h === "login") return renderLogin("#home");
   if (REQUIRE_LOGIN && !session) return renderLogin(location.hash);
   if (h === "admin-new-episode") return renderAdmin("episode");
@@ -380,7 +412,7 @@ function route() {
   if (h === "home" || h === "") return renderHome();
   if (h === "find") { const auto = findAuto; findAuto = false; return renderFind(auto); }
   if (h === "about") return renderAbout();
-  if (h === "all-episodes") { revealAll = true; renderHome(); document.getElementById("all-episodes").scrollIntoView(); return; }
+  if (h === "all-episodes") return renderAll();
   if (h === "shows") return renderAbout();
   if (h.startsWith("show-")) { showLimit = SHOW_PAGE; return renderShow(h.slice(5)); }
   const e = EPISODES.find(x => x.id === h);
