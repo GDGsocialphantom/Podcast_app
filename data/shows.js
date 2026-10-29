@@ -5,7 +5,7 @@
 //   logo   path to the show's logo, square or wide, PNG or SVG with transparency. Drop the file in assets/shows/.
 //          If the file is missing the site shows a monogram tile in the brand color instead, so nothing breaks.
 const SHOWS = [
-  { id: "disruption", name: "The Disruption Lab", color: "#1F2937", ink: "#FFFFFF", logo: "assets/shows/disruption.png", org: "Keystone Innovation District",
+  { id: "disruption", name: "The Disruption Lab", color: "#181B41", ink: "#FFFFFF", logo: "assets/shows/disruption.png", org: "Keystone Innovation District",
     tagline: "Disruption isn't a trend, it's a mindset.",
     hosts: ["Kevin McGinnis"],
     about: "Founders, thinkers and change-makers on how they're shaking up industries, improving communities and building what's next. Unscripted, unfiltered, and often recorded live at Keystone Sessions." },
