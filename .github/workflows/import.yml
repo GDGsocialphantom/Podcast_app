@@ -1,0 +1,66 @@
+name: Import episodes
+
+# Daily: tools/import-youtube.js reads each show's playlist (data/shows.js, youtube.playlist with autoImport true)
+# through the YouTube Data API and adds videos that are not on the site yet, then commits to main. New episodes go
+# live the same day with the host as the only person and no topics until an admin edits them. After a commit it starts
+# the Transcripts workflow, because a push made with GITHUB_TOKEN does not trigger other workflows on its own.
+# Run by hand from Actions or from Admin > Imports > Run import (the Worker dispatches this file); dry_run prints what
+# would be added and changes nothing.
+on:
+  schedule:
+    - cron: "7 12 * * *"   # 12:07 UTC daily, before the Transcripts schedule at 13:23
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Dry run: print what would be added, change nothing"
+        type: boolean
+        default: false
+      show:
+        description: "Show id (blank = every show with autoImport)"
+        required: false
+        default: ""
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: transcripts
+  cancel-in-progress: false
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Import
+        env:
+          YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
+        run: |
+          flag=""; [ "${{ github.event.inputs.dry_run }}" = "true" ] && flag="--dry-run"
+          node tools/import-youtube.js $flag ${{ github.event.inputs.show }} | tee import.log || echo "::warning title=Import::stopped early, see the log"
+          grep -E '^(Done:|[a-z]+: [0-9]+ in playlist)' import.log | sed 's/^/::notice title=Import::/' || true
+          grep -E '^(would add|add) ' import.log | head -40 | sed 's/^/::notice title=Import episode::/' || true
+          { echo '### Import'; echo; echo '```'; cat import.log; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+      - run: node tools/check-data.js
+      - name: Commit new episodes
+        id: commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/episodes.js data/descriptions data/import-status.json
+          if git diff --cached --quiet; then echo "No changes."; exit 0; fi
+          SUMMARY=$(grep -m1 '^Done:' import.log || echo "Import episodes")
+          git commit -m "Import episodes from YouTube" -m "$SUMMARY"
+          git pull --rebase origin main
+          git push origin HEAD:main
+          if git show --stat HEAD | grep -q "data/episodes.js"; then gh workflow run transcripts.yml --ref main && echo "::notice title=Import::Transcripts workflow started for the new episodes"; fi

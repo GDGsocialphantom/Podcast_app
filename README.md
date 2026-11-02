@@ -17,6 +17,8 @@ auth/                 login page, session cache and the provider that talks to t
 tools/fetch-transcripts.js  pulls transcripts from YouTubeTranscript.dev into data/transcripts/ (runs on GitHub; needs the API key)
 data/transcript-status.json  what the fetcher did per episode: ok, no captions, credits exhausted or error, plus credits used
 data/descriptions/    one <episode id>.txt per episode: the YouTube description as published; source for links and chapters
+tools/import-youtube.js  daily importer: reads each show's YouTube playlist (shows.js youtube.playlist) and adds new episodes (needs YOUTUBE_API_KEY)
+data/import-status.json  what the importer did per show on its last run
 tools/notes-from-descriptions.js  turns URLs and timestamp lists in the description into notes.links and notes.chapters (never overwrites)
 tools/generate-takeaways.js  writes 3 to 5 takeaways per transcript with Gemini on the free tier (needs GEMINI_API_KEY); marks them notes.generated
 tools/transcribe.py   turns an episode's audio into a clean transcript JSON
