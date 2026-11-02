@@ -1,0 +1,56 @@
+name: YouTube lookup
+
+# Read-only YouTube Data API lookups (tools/youtube-lookup.js) with the YOUTUBE_API_KEY secret. Results are committed
+# to the yt-lookup-results branch under lookups/<run id>/, where a workspace that cannot reach Google can read them.
+# Nothing here touches main or the site data.
+on:
+  workflow_dispatch:
+    inputs:
+      commands:
+        description: "One command per line, e.g. channels \"The EKO System\" | search <channelId> Suzanne Gunn | comments dl-abc dl-def"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  lookup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Run lookups
+        env:
+          YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
+          COMMANDS: ${{ github.event.inputs.commands }}
+        run: |
+          mkdir -p out
+          n=0
+          while IFS= read -r line; do
+            [ -z "$line" ] && continue
+            n=$((n+1))
+            echo "== $line"
+            eval "node tools/youtube-lookup.js $line" > "out/$n.json" || echo "::warning title=YouTube lookup::command $n failed: $line"
+            echo "$line" > "out/$n.cmd"
+          done <<< "$COMMANDS"
+          ls -la out
+      - name: Publish results to the yt-lookup-results branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin yt-lookup-results || true
+          git checkout -B yt-lookup-results origin/yt-lookup-results 2>/dev/null || git checkout --orphan yt-lookup-results
+          git reset -q
+          mkdir -p "lookups/${{ github.run_id }}"
+          cp out/* "lookups/${{ github.run_id }}/"
+          git add lookups
+          git commit -m "YouTube lookup results for run ${{ github.run_id }}" || echo "nothing to commit"
+          git push origin yt-lookup-results
+          echo "::notice title=YouTube lookup::results in lookups/${{ github.run_id }} on branch yt-lookup-results"
