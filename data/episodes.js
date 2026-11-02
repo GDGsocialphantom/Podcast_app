@@ -108,7 +108,7 @@ const EPISODES = [
     title: "85% Want Help. 5% Get It. This Founder Duo Is Closing the Gap.",
     summary: "Brandon survived 12 strokes. Lindsay has been his care partner for 15 years. Now they're co-founders of Beyond This, building the relationship support system the healthcare industry left out. First episode of the Social Venture Studio Founder Series.",
     topics: ["Healthcare", "Disability", "Social Venture Studio", "Founder stories"],
-    people: [{ n: "Kevin McGinnis", r: "Host" }, { n: "Brandon", r: "Co-founder, Beyond This" }, { n: "Lindsay", r: "Co-founder, Beyond This" }],  // TODO full name
+    people: [{ n: "Kevin McGinnis", r: "Host" }, { n: "Brandon Taylor", r: "Co-founder, Beyond This" }, { n: "Lindsey Taylor", r: "Co-founder, Beyond This" }],
     youtube: "o0gi9DXFBFQ",
     notes: { takeaways: [], chapters: [], links: [] } },
   { id: "dl-ntprbVnCwJs", show: "disruption", format: "Interview", date: "2026-07-20", duration: 47,

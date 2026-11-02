@@ -341,7 +341,7 @@ function renderShowEditor(id) {
     const color = (vals.color || "").trim();
     const ink = form.inkauto.checked ? suggestInk(color) : (vals.ink || "").trim();
     const ext = logoData ? logoData.ext : logoExt(existing && existing.id === sid ? existing.logo : "");
-    return { vals, s: { id: sid, name: vals.name.trim(), color, ink, logo: sid ? `assets/shows/${sid}.${ext}` : "", org: vals.org.trim(), tagline: vals.tagline.trim(), hosts: lines(vals.hosts), about: vals.about.trim() } };
+    return { vals, s: { id: sid, name: vals.name.trim(), color, ink, logo: sid ? `assets/shows/${sid}.${ext}` : "", org: vals.org.trim(), tagline: vals.tagline.trim(), hosts: lines(vals.hosts), about: vals.about.trim(), ...(existing && existing.youtube ? { youtube: existing.youtube } : {}) } };   // youtube (importer playlist) has no field yet; keep what the data has
   }
   function update() {
     const { vals, s } = currentShow();
