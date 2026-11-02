@@ -1,7 +1,18 @@
 // Episodes. Copy any object to add one; the site sorts by date. Shows with no episodes yet still appear in the sidebar and show list.
 // Transcripts live in data/transcripts/<episode id>.json (fetched by tools/fetch-transcripts.js on GitHub; tools/transcribe.py for clean ones). Run `node tools/check-data.js` before committing.
 const EPISODES = [
-  /* ---- The Disruption Lab (172 episodes from youtube.com/@thedisruptionlabpodcast, pulled 2026-10-01). Takeaways not yet added. ---- */
+  /* ---- The Disruption Lab (172 episodes from youtube.com/@thedisruptionlabpodcast, pulled 2026-10-01, plus later additions). ---- */
+  { id: "dl-CGRCN7I5qq0", show: "disruption", format: "Interview", date: "2026-10-01", duration: 55,
+    title: "Kansas City Didn't Leave Out Its African Entrepreneurs. It Didn't Know They Existed.",
+    summary: "Suzanne Gunn, former oncology nurse, med spa owner, couture designer and founder of AfroKC, on the ventures that trace back to her mother, the festival that made African-owned businesses visible to Kansas City, and a planned Fashion and Beauty Innovation Campus.",
+    topics: ["Black entrepreneurship", "Community", "Fashion", "Kansas City", "Immigrant founders"],
+    people: [{ n: "Kevin McGinnis", r: "Host" }, { n: "Suzanne Gunn", r: "Founder, AfroKC" }],
+    youtube: "CGRCN7I5qq0",
+    notes: {
+      takeaways: [],
+      chapters: [],
+      links: []
+    } },
   { id: "dl-RIMeKTnjecY", show: "disruption", format: "Interview", date: "2026-09-25", duration: 56,
     title: "Building a Business That Heals a Community",
     summary: "Chris Goode, founder of Ruby Jean's Juicery, on opening the East Side's first health-focused food business on Troost Avenue, the campaign to rename the street, and how trust built on the block got Ruby Jean's into Whole Foods.",
@@ -482,7 +493,7 @@ const EPISODES = [
     title: "Can Journalism Survive? Inside the Fight to Rebuild Trust and Save Local News",
     summary: "Is local journalism dying, or being reborn? Stephanie, CEO of The Beacon, on plunging public trust, misinformation and disappearing local newsrooms.",
     topics: ["Journalism", "Local news", "Nonprofits"],
-    people: [{ n: "Kevin McGinnis", r: "Host" }, { n: "Stephanie", r: "CEO, The Beacon" }],  // TODO full name
+    people: [{ n: "Kevin McGinnis", r: "Host" }, { n: "Stephanie Campbell", r: "CEO, The Beacon" }],
     youtube: "QQuPzgZkNr8",
     notes: { takeaways: [], chapters: [], links: [] } },
   { id: "dl-XTcDV_HWcMk", show: "disruption", format: "Interview", date: "2025-04-17", duration: 55,
