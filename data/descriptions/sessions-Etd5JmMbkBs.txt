@@ -1,0 +1,7 @@
+What happens when a founder builds a healthcare AI agent before checking whether it touches protected health information and finds out too late?
+
+In this Keystone Sessions talk, Gwen Gillette breaks down the compliance framework that determines whether an AI agent in healthcare needs a Business Associate Agreement (BAA) at all and why most builders get the order of operations backwards. Instead of starting with a tool, Gwen walks through HIPAA's Treatment, Payment, and Operations (TPO) framework as the first filter for any healthcare AI project, then digs into what actually counts as de-identified data (it's not just stripping names; ZIP codes, the 18 required fields, and time-shifting all matter), and why "payment" is still the least-solved corner of healthcare AI.
+
+The core of the talk is a side-by-side build: two AI agents from the same practice one flagging prior authorization denials (requires a BAA, touches PHI, needs a permanent human sign-off) and one identifying the slowest-paying insurers (no PHI, no BAA, runs almost anywhere). Gwen makes the case for which one a practice should actually build first, and why speed-to-value and regulatory exposure often point in opposite directions.
+
+If you're building, deploying, or evaluating AI agents in a regulated industry, this is a working model for scoping compliance before you write a line of code.

@@ -1,0 +1,7 @@
+What happens when the same AI agent that can run your startup on autopilot isn't allowed anywhere near a patient record?
+
+Gwen draws the real line between a chatbot and an autonomous agent, explains why "one agent, one job" matters even more in clinical settings, and shows why a founder can let an AI agent run unsupervised while a hospital legally cannot.
+
+The conversation covers what founders and healthcare operators actually need to know: how to pick a model by testing ChatGPT, Claude, and Gemini head-to-head, when to deploy through AWS Bedrock or Google Vertex AI instead, and why a Business Associate Agreement (BAA) becomes the single most important document in any HIPAA-regulated AI deployment. Gwen also unpacks tiered autonomy, the emerging 2026 rule allowing administrative AI to earn independence over time while clinical and coverage decisions never can, and why regulated data, regulated autonomy, and regulated vendor chains change every assumption a startup founder brings into the room.
+
+If you're a founder exploring agentic AI, a healthcare operator evaluating vendors, or a hospital leader trying to separate real capability from hype, this episode maps the guardrails that actually matter.

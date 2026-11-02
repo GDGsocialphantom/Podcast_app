@@ -1,0 +1,11 @@
+Before you bolt AI onto your business, you need to know where it actually belongs — and that starts with mapping your value stream.
+
+In this Keystone Session, Phil Ledgerwood walks through one of the most practical (and most overlooked) steps in any AI or process-improvement effort: value stream mapping. Using a property and casualty insurance company as a live example, Phil shows how to trace the full path from the moment a customer makes a request to the moment you deliver — and how that map reveals exactly where time, friction, and opportunity are hiding.
+Whether you run an insurance team, a service business, or you're just trying to figure out where automation makes sense in your own work, this is a clear, jargon-free primer on thinking in value streams.
+In this session:
+
+What a value stream actually is (and why it applies to companies and individuals)
+The discovery questions to ask before redesigning any process
+How to map a workflow from request to delivery
+Why mapping comes before deciding where AI or automation fits
+A real-world walkthrough using P&C insurance quote generation

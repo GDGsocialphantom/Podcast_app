@@ -1,0 +1,8 @@
+Phil Ledgerwood breaks down why most organizations get AI automation backwards — and why supercharging a broken process only makes the mess bigger, faster. In this Keystone Sessions talk, Phil walks through real client examples (including a biotech firm and an insurance company) to show where AI genuinely adds value, where it's dangerous, and why judgment still belongs to humans.
+
+Key ideas covered:
+✅ Why optimizing your process has to come before automating it
+✅ The real difference between low-stakes and mission-critical AI use cases
+✅ Why AI "can't think" — and what that means for decisions like underwriting
+✅ How to identify the tasks only a human should own
+✅ A simple test for figuring out what to hand off to AI (and what never to)

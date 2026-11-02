@@ -1,0 +1,7 @@
+How do you build a hospital's bathrooms in a warehouse instead of on-site — or laser-scan an entire football stadium down to the marching band practicing on the field?
+
+On part 2 of 3 of this Keystone Sessions takeover, Evan Fox and Dylan Lowder of JE Dunn Construction's Virtual Design and Construction (VDC) team continue their discussion, this time about a walkthrough of the digital toolbox reshaping how buildings actually get built.
+
+They break down building coordination — the process of routing mechanical, electrical, plumbing, and fire suppression systems through a space without clashes, without losing an architect's design intent, and without simply lowering every ceiling until things fit. That coordination gets pushed further into prefabrication: entire mechanical racks, bathroom pods, and hospital head walls assembled off-site in a controlled warehouse environment, then trucked in and lifted into place by tower crane — cutting risk, cost, and time compared to building it all on the job site.
+
+The conversation moves into reality capture: Buildots-powered 360-degree documentation that tracks a project's percent-complete in near real time, and laser scanning — a technology precise enough to capture as-built conditions no tape measure could reach, used everywhere from a hospital mechanical room to a full-scale stadium scan (185 gigabytes of data, captured over two weeks, including a marching band mid-rehearsal) to century-old historic buildings where original tolerances were far looser than today's standards.

@@ -1,0 +1,5 @@
+Who actually owns the data your tractor collects, and why does a farmer still keep only $20 an acre when yields are up 60%?
+
+On this episode of The Disruption Lab, host Kevin McGinnis sits down with Jason Tatge, a two-time ag tech founder and now CEO of PrairieFood. Jason started as a commodity trader because his grandfather warned him that farmers “always get screwed.” That warning became the question behind everything he’s built since: how can technology help farmers keep more of what they produce?
+
+At Farmobile, that meant collecting real-time data straight off farm equipment and treating it as the farmer’s property, not the manufacturer’s. His argument to Congress was that farmers were paying Microsoft prices for equipment but being treated like Google users. At PrairieFood, it means using continuous-flow hydrothermal processing to turn livestock and ethanol waste into a soil amendment. In third-party field trials, it beat synthetic starter fertilizer on yield in 9 of 11 trials.
