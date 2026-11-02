@@ -408,27 +408,42 @@ function renderShowsAdmin() {
   });
 }
 
-/* ---------- transcripts status ---------- */
-// Transcripts are fetched on GitHub by tools/fetch-transcripts.js whenever data/episodes.js changes on main, daily,
-// or when Run now asks the Worker to dispatch the workflow. This page reads data/transcript-status.json; the browser
-// never calls the transcript API itself.
+/* ---------- imports and transcripts status ---------- */
+// Episodes arrive through the Import workflow (tools/import-youtube.js, daily, reads each show's playlist), transcripts
+// and show notes through the Transcripts workflow (daily and after every import). This page reads
+// data/import-status.json and data/transcript-status.json and can start either workflow through the Worker; the
+// browser never calls YouTube or the transcript API itself.
+let importStatusCache = null;
+function importStatus() { if (!importStatusCache) importStatusCache = fetch("data/import-status.json", { cache: "no-cache" }).then(r => r.ok ? r.json() : null).catch(() => null); return importStatusCache; }
 function renderTranscriptsAdmin() {
   adminShell({
-    title: "Transcripts",
-    sub: `Fetching and show notes run on GitHub (the Transcripts workflow) when <code>data/episodes.js</code> changes on main, once a day, or from Run now. Episodes that already have a file are never fetched again.`,
-    form: `<div class="admin-stats" id="tx-stats"><span class="eyebrow">Loading status…</span></div>
-      <div class="admin-actions" style="border:0;padding:0 0 16px"><button type="button" class="btn small" id="tx-run">Run now</button><span class="admin-where" id="tx-run-status">Starts the Transcripts workflow on GitHub for every episode without a transcript.</span></div>
+    title: "Imports",
+    sub: `New episodes are pulled from each show's YouTube playlist once a day (the Import workflow); transcripts, links, chapters and takeaways follow (the Transcripts workflow). Both run on GitHub. Run either by hand here.`,
+    form: `<div class="admin-stats" id="im-stats"><span class="eyebrow">Loading import status…</span></div>
+      <div class="admin-actions" style="border:0;padding:0 0 16px"><button type="button" class="btn small" id="im-run">Run import</button><span class="admin-where" id="im-run-status">Checks every show with autoImport on and adds what is missing.</span></div>
+      <div class="admin-stats" id="tx-stats"><span class="eyebrow">Loading transcript status…</span></div>
+      <div class="admin-actions" style="border:0;padding:0 0 16px"><button type="button" class="btn small" id="tx-run">Run transcripts</button><span class="admin-where" id="tx-run-status">Fetches transcripts and show notes for every episode that has none.</span></div>
       <div class="card admin-table"><table id="tx-table"><thead><tr><th>Episode</th><th>Status</th><th>Checked</th><th>Credits</th></tr></thead><tbody></tbody></table></div>`
   });
-  const stats = document.getElementById("tx-stats"), body = document.querySelector("#tx-table tbody");
-  const runBtn = document.getElementById("tx-run"), runStatus = document.getElementById("tx-run-status");
-  runBtn.onclick = async () => {
-    runBtn.disabled = true; runStatus.textContent = "Starting…";
-    try { const r = await apiPost("/import/run", { workflow: "transcripts" }); runStatus.innerHTML = `Started. Watch it under <a href="${esc(r.url)}" target="_blank" rel="noopener">Actions</a>; this page updates once it commits.`; }
-    catch (err) { runStatus.textContent = "Not started: " + err.message; runBtn.disabled = false; }
-  };
-  const label = { ok: "ok", no_captions: "no captions", credits_exhausted: "credits exhausted", error: "error" };
   const fmt = iso => iso ? new Date(iso).toLocaleString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" }) : "";
+  const imStats = document.getElementById("im-stats");
+  (location.protocol === "file:" ? Promise.resolve(null) : importStatus()).then(st => {
+    const shows = (st && st.shows) || {};
+    imStats.innerHTML = SHOWS.map(s => { const v = shows[s.id]; const cfg = s.youtube || {}; return `<div class="stat card"><b>${v && v.added != null ? v.added : (cfg.autoImport ? "0" : "off")}</b><span>${esc(s.name)}${v && v.error ? " (error)" : ""}</span></div>`; }).join("")
+      + `<p class="admin-where">${st && st.last_run ? `Last import ${esc(fmt(st.last_run))}, ${st.last_added || 0} added. Counts are from that run.` : "No import run recorded yet."}${SHOWS.some(s => !(s.youtube && s.youtube.autoImport)) ? " Shows marked off have no playlist yet." : ""}</p>`;
+  });
+  const wire = (btnId, statusId, workflow, started) => {
+    const btn = document.getElementById(btnId), st = document.getElementById(statusId);
+    btn.onclick = async () => {
+      btn.disabled = true; st.textContent = "Starting…";
+      try { const r = await apiPost("/import/run", { workflow }); st.innerHTML = `${started} Watch it under <a href="${esc(r.url)}" target="_blank" rel="noopener">Actions</a>; this page updates once it commits.`; }
+      catch (err) { st.textContent = "Not started: " + err.message; btn.disabled = false; }
+    };
+  };
+  wire("im-run", "im-run-status", "import", "Import started.");
+  wire("tx-run", "tx-run-status", "transcripts", "Transcripts started.");
+  const stats = document.getElementById("tx-stats"), body = document.querySelector("#tx-table tbody");
+  const label = { ok: "ok", no_captions: "no captions", credits_exhausted: "credits exhausted", error: "error" };
   (location.protocol === "file:" ? Promise.resolve(null) : transcriptStatus()).then(st => {
     const eps = (st && st.episodes) || {};
     const rows = sorted().map(e => ({ e, s: eps[e.id] }));
@@ -446,6 +461,6 @@ function renderAdmin(kind, id) {
   if (!isAdmin()) return renderLogin(location.hash);
   if (kind === "episode") return renderEpisodeEditor(id);
   if (kind === "show") return renderShowEditor(id);
-  if (kind === "transcripts") return renderTranscriptsAdmin();
+  if (kind === "transcripts" || kind === "imports") return renderTranscriptsAdmin();
   return renderShowsAdmin();
 }

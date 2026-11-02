@@ -63,7 +63,8 @@
     if (!e.format) p.push("Pick a format.");
     if (!DATE.test(e.date || "") || isNaN(Date.parse(e.date))) p.push("Date should be YYYY-MM-DD.");
     if (typeof e.duration !== "number" || !(e.duration > 0)) p.push("Duration should be a number of minutes.");
-    if (!Array.isArray(e.topics) || !e.topics.length) p.push("Add at least one topic.");
+    if (!Array.isArray(e.topics)) p.push("topics should be an array.");
+    else if (!e.topics.length) w.push("No topics yet; the episode will not show up in Find until an admin adds some.");
     if (!Array.isArray(e.people) || !e.people.length) p.push("Add at least one person.");
     else {
       if (e.people.some(x => !x || !x.n || !x.r)) p.push("Each person needs a name and a role: Name | Role.");

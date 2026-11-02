@@ -406,7 +406,7 @@ function route() {
   if (h === "admin-new-episode") return renderAdmin("episode");
   if (h === "admin-shows") return renderAdmin("shows");
   if (h === "admin-new-show") return renderAdmin("show");
-  if (h === "admin-transcripts") return renderAdmin("transcripts");
+  if (h === "admin-imports" || h === "admin-transcripts") return renderAdmin("transcripts");
   if (h.startsWith("admin-edit-show-")) return renderAdmin("show", h.slice(16));
   if (h.startsWith("admin-edit-")) return renderAdmin("episode", h.slice(11));
   if (h === "home" || h === "") return renderHome();
