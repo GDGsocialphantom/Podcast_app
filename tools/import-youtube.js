@@ -27,6 +27,7 @@ const args = process.argv.slice(2);
 const dryRun = args.includes("--dry-run");
 const only = args.filter(a => !a.startsWith("--"));
 const statusFile = path.join(root, "data", "import-status.json");
+const skipFile = path.join(root, "data", "import-skip.json");   // { "<youtube id>": "why" }: videos the importer must never add
 const descDir = path.join(root, "data", "descriptions");
 
 async function yt(resource, params) {
@@ -67,6 +68,7 @@ function firstParagraph(desc) {
 (async () => {
   const { SHOWS, EPISODES } = loadData();
   const have = new Set(EPISODES.map(e => e.youtube));
+  const skip = fs.existsSync(skipFile) ? JSON.parse(fs.readFileSync(skipFile, "utf8")) : {};
   const showIds = new Set(SHOWS.map(s => s.id)), episodeIds = new Set(EPISODES.map(e => e.id));
   let src = fs.readFileSync(episodesFile, "utf8");
   let status = { last_run: null, shows: {} };
@@ -79,8 +81,10 @@ function firstParagraph(desc) {
     if (!cfg.autoImport || !cfg.playlist) { console.log(`${s.id}: autoImport off, skipped`); continue; }
     let ids;
     try { ids = await playlistVideoIds(cfg.playlist); } catch (err) { console.log(`${s.id}: could not read playlist ${cfg.playlist}: ${err.message}`); status.shows[s.id] = { ...(status.shows[s.id] || {}), checked: new Date().toISOString(), error: err.message }; continue; }
-    const fresh = ids.filter(id => !have.has(id));
+    const fresh = ids.filter(id => !have.has(id) && !skip[id]);
+    const skipped = ids.filter(id => skip[id]).length;
     const details = fresh.length ? await videoDetails(fresh) : [];
+    const unavailable = fresh.length - details.length;   // deleted or private videos still sit in the playlist but videos.list omits them
     let short = 0, live = 0, priv = 0, count = 0;
     for (const v of details) {
       const minutes = isoMinutes(v.contentDetails.duration);
@@ -103,8 +107,8 @@ function firstParagraph(desc) {
         episodeIds.add(e.id); have.add(v.id);
       }
     }
-    status.shows[s.id] = { playlist: cfg.playlist, checked: new Date().toISOString(), in_playlist: ids.length, added: count, skipped_short: short, skipped_live: live, skipped_private: priv };
-    console.log(`${s.id}: ${ids.length} in playlist, ${fresh.length} not on the site, ${count} ${dryRun ? "would be " : ""}added, ${short} under ${MIN_MINUTES} min, ${live} live or upcoming, ${priv} not public`);
+    status.shows[s.id] = { playlist: cfg.playlist, checked: new Date().toISOString(), in_playlist: ids.length, added: count, skipped_short: short, skipped_live: live, skipped_private: priv, skipped_list: skipped, unavailable };
+    console.log(`${s.id}: ${ids.length} in playlist, ${fresh.length} not on the site, ${count} ${dryRun ? "would be " : ""}added, ${short} under ${MIN_MINUTES} min, ${live} live or upcoming, ${priv} not public, ${unavailable} unavailable, ${skipped} on the skip list`);
   }
   if (!dryRun) {
     if (added.length) {
