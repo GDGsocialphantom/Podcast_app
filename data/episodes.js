@@ -1,6 +1,17 @@
 // Episodes. Copy any object to add one; the site sorts by date. Shows with no episodes yet still appear in the sidebar and show list.
 // Transcripts live in data/transcripts/<episode id>.json (fetched by tools/fetch-transcripts.js on GitHub; tools/transcribe.py for clean ones). Run `node tools/check-data.js` before committing.
 const EPISODES = [
+  { id: "sessions-gwBridXwm0s", show: "sessions", format: "Talk", date: "2026-11-03", duration: 14,
+    title: "Jewelry That Breaks Every Rule (And Still Ended Up in Museums)",
+    summary: "What if the piece you wore into a room did the introducing for you?",
+    topics: [],
+    people: [{ n: "Keystone CoLAB", r: "Host" }],
+    youtube: "gwBridXwm0s",
+    notes: {
+      takeaways: [],
+      chapters: [],
+      links: []
+    } },
   { id: "sessions-73b3pSR7ZJ8", show: "sessions", format: "Talk", date: "2026-06-30", duration: 20,
     title: "The 2026 Social Media Playbook: What Changed on Every Platform (and What to Do About It)",
     summary: "Hashtags are dead. Instagram wants raw over polished. TikTok stopped being a viral growth machine. If your social media strategy still looks like 2024, you're leaving reach on the table.",
