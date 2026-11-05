@@ -1,6 +1,17 @@
 // Episodes. Copy any object to add one; the site sorts by date. Shows with no episodes yet still appear in the sidebar and show list.
 // Transcripts live in data/transcripts/<episode id>.json (fetched by tools/fetch-transcripts.js on GitHub; tools/transcribe.py for clean ones). Run `node tools/check-data.js` before committing.
 const EPISODES = [
+  { id: "sessions-aN0DUtWv6Vk", show: "sessions", format: "Talk", date: "2026-11-05", duration: 22,
+    title: "Why This Artist Never Designs for the Person Wearing It. A Tale Of Jewelry And Journey.",
+    summary: "What does it take to turn a habit of keeping your hands busy into a 19-year career, museum commissions, and a business that runs on referrals?",
+    topics: [],
+    people: [{ n: "Keystone CoLAB", r: "Host" }],
+    youtube: "aN0DUtWv6Vk",
+    notes: {
+      takeaways: [],
+      chapters: [],
+      links: []
+    } },
   { id: "sessions-gwBridXwm0s", show: "sessions", format: "Talk", date: "2026-11-03", duration: 14,
     title: "Jewelry That Breaks Every Rule (And Still Ended Up in Museums)",
     summary: "What if the piece you wore into a room did the introducing for you?",
