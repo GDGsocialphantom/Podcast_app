@@ -1,5 +1,5 @@
 {
-  "last_run": "2026-11-06T19:58:24.524Z",
+  "last_run": "2026-11-07T17:43:53.650Z",
   "credits_used_total": 1,
   "episodes": {
     "dl-iFsQtIyEXys": {
@@ -75,6 +75,11 @@
     "sessions-aN0DUtWv6Vk": {
       "status": "credits_exhausted",
       "checked": "2026-11-06T19:58:24.524Z",
+      "credits_used": 0
+    },
+    "dl-4AjaqWY66AU": {
+      "status": "credits_exhausted",
+      "checked": "2026-11-07T17:43:53.650Z",
       "credits_used": 0
     }
   }

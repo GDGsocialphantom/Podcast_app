@@ -18,11 +18,7 @@ const EPISODES = [
     topics: [],
     people: [{ n: "Kevin McGinnis", r: "Host" }],
     youtube: "lN6NRDcrOt0",
-    notes: {
-      takeaways: [],
-      chapters: [],
-      links: []
-    } },
+    notes: { takeaways: [], chapters: [], links: [["KC Global Design", "https://onekc.org/kc-global-design/"], ["Keystone District", "https://keystonedistrict.org/"]] } },
   { id: "sessions-aN0DUtWv6Vk", show: "sessions", format: "Talk", date: "2026-11-05", duration: 22,
     title: "Why This Artist Never Designs for the Person Wearing It. A Tale Of Jewelry And Journey.",
     summary: "What does it take to turn a habit of keeping your hands busy into a 19-year career, museum commissions, and a business that runs on referrals?",
