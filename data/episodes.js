@@ -1,6 +1,28 @@
 // Episodes. Copy any object to add one; the site sorts by date. Shows with no episodes yet still appear in the sidebar and show list.
 // Transcripts live in data/transcripts/<episode id>.json (fetched by tools/fetch-transcripts.js on GitHub; tools/transcribe.py for clean ones). Run `node tools/check-data.js` before committing.
 const EPISODES = [
+  { id: "dl-4AjaqWY66AU", show: "disruption", format: "Interview", date: "2026-11-06", duration: 47,
+    title: "The Hidden Global Industry: Why Kansas City Is Secretly Designing the World",
+    summary: "Kansas City firms helped design 27 of 30 NFL stadiums, every 2026 World Cup venue and nearly a quarter of the world’s power systems. So why is KC’s biggest industry still one of its best-kept secrets?",
+    topics: [],
+    people: [{ n: "Kevin McGinnis", r: "Host" }],
+    youtube: "4AjaqWY66AU",
+    notes: {
+      takeaways: [],
+      chapters: [],
+      links: []
+    } },
+  { id: "dl-lN6NRDcrOt0", show: "disruption", format: "Interview", date: "2026-11-06", duration: 47,
+    title: "The Hidden Global Industry: Why Kansas City Is Secretly Designing the World",
+    summary: "Kansas City firms had a hand in 27 of the 30 NFL stadiums and all 16 FIFA World Cup stadiums. They design 23% of the world’s power systems, 10% of its transportation infrastructure and 9% of its telecom systems. So why does the rest of the country still think “barbecue and Hallmark”?",
+    topics: [],
+    people: [{ n: "Kevin McGinnis", r: "Host" }],
+    youtube: "lN6NRDcrOt0",
+    notes: {
+      takeaways: [],
+      chapters: [],
+      links: []
+    } },
   { id: "sessions-aN0DUtWv6Vk", show: "sessions", format: "Talk", date: "2026-11-05", duration: 22,
     title: "Why This Artist Never Designs for the Person Wearing It. A Tale Of Jewelry And Journey.",
     summary: "What does it take to turn a habit of keeping your hands busy into a 19-year career, museum commissions, and a business that runs on referrals?",
