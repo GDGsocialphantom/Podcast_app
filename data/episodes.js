@@ -1,6 +1,17 @@
 // Episodes. Copy any object to add one; the site sorts by date. Shows with no episodes yet still appear in the sidebar and show list.
 // Transcripts live in data/transcripts/<episode id>.json (fetched by tools/fetch-transcripts.js on GitHub; tools/transcribe.py for clean ones). Run `node tools/check-data.js` before committing.
 const EPISODES = [
+  { id: "sessions-XYrDFtyZWO0", show: "sessions", format: "Talk", date: "2026-11-10", duration: 14,
+    title: "Innovation Is a Story Problem",
+    summary: "What if the thing holding your innovation back isn’t the idea but the story behind it?",
+    topics: [],
+    people: [{ n: "Keystone CoLAB", r: "Host" }],
+    youtube: "XYrDFtyZWO0",
+    notes: {
+      takeaways: [],
+      chapters: [],
+      links: []
+    } },
   { id: "dl-4AjaqWY66AU", show: "disruption", format: "Interview", date: "2026-11-06", duration: 47,
     title: "The Hidden Global Industry: Why Kansas City Is Secretly Designing the World",
     summary: "Kansas City firms helped design 27 of 30 NFL stadiums, every 2026 World Cup venue and nearly a quarter of the world’s power systems. So why is KC’s biggest industry still one of its best-kept secrets?",
