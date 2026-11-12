@@ -1,9 +1,9 @@
 {
-  "last_run": "2026-11-11T19:31:40.883Z",
+  "last_run": "2026-11-12T19:50:12.994Z",
   "shows": {
     "disruption": {
       "playlist": "PL79s92JUJmRMr-oTVX0SSH10CoYGmTsyU",
-      "checked": "2026-11-11T19:31:40.350Z",
+      "checked": "2026-11-12T19:50:12.338Z",
       "in_playlist": 184,
       "added": 0,
       "skipped_short": 0,
@@ -14,7 +14,7 @@
     },
     "eko": {
       "playlist": "UUe5jHdr7RCKLD5h7UFd_GYA",
-      "checked": "2026-11-11T19:31:40.600Z",
+      "checked": "2026-11-12T19:50:12.691Z",
       "in_playlist": 14,
       "added": 0,
       "skipped_short": 9,
@@ -25,8 +25,8 @@
     },
     "sessions": {
       "playlist": "UUW6FhzluqAlvkWrObXiWpcA",
-      "checked": "2026-11-11T19:31:40.882Z",
-      "in_playlist": 39,
+      "checked": "2026-11-12T19:50:12.993Z",
+      "in_playlist": 40,
       "added": 1,
       "skipped_short": 0,
       "skipped_live": 0,

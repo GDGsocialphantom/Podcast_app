@@ -1,6 +1,17 @@
 // Episodes. Copy any object to add one; the site sorts by date. Shows with no episodes yet still appear in the sidebar and show list.
 // Transcripts live in data/transcripts/<episode id>.json (fetched by tools/fetch-transcripts.js on GitHub; tools/transcribe.py for clean ones). Run `node tools/check-data.js` before committing.
 const EPISODES = [
+  { id: "sessions-dPLrY8C9Dmo", show: "sessions", format: "Talk", date: "2026-11-12", duration: 17,
+    title: "What The Wizard of Oz Teaches About Innovation",
+    summary: "What if your business is just stringing actions together without moving forward?",
+    topics: [],
+    people: [{ n: "Keystone CoLAB", r: "Host" }],
+    youtube: "dPLrY8C9Dmo",
+    notes: {
+      takeaways: [],
+      chapters: [],
+      links: []
+    } },
   { id: "sessions-XYrDFtyZWO0", show: "sessions", format: "Talk", date: "2026-11-10", duration: 14,
     title: "Innovation Is a Story Problem",
     summary: "What if the thing holding your innovation back isn’t the idea but the story behind it?",
