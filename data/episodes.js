@@ -1,6 +1,28 @@
 // Episodes. Copy any object to add one; the site sorts by date. Shows with no episodes yet still appear in the sidebar and show list.
 // Transcripts live in data/transcripts/<episode id>.json (fetched by tools/fetch-transcripts.js on GitHub; tools/transcribe.py for clean ones). Run `node tools/check-data.js` before committing.
 const EPISODES = [
+  { id: "dl-TntV-Crlxtc", show: "disruption", format: "Interview", date: "2026-11-12", duration: 42,
+    title: "He Builds Kansas City’s Public Art. His Name Isn’t on Any of It.",
+    summary: "For 25 years, Dick Jobe was Kansas City’s “Dr. Volvo,” the mechanic the city trusted with its cars. Then he walked away from the top of one trade to start over in another. Today his work hangs in airports, hotels, and NASCAR’s Victory Lane, and almost none of it carries his name.",
+    topics: [],
+    people: [{ n: "Kevin McGinnis", r: "Host" }],
+    youtube: "TntV-Crlxtc",
+    notes: {
+      takeaways: [],
+      chapters: [],
+      links: []
+    } },
+  { id: "dl-EVHlwo8WyJQ", show: "disruption", format: "Interview", date: "2026-11-13", duration: 42,
+    title: "He Builds Kansas City’s Public Art. His Name Isn’t on Any of It.",
+    summary: "Who builds the art you walk past every day? And what happens to a city when nobody local can?",
+    topics: [],
+    people: [{ n: "Kevin McGinnis", r: "Host" }],
+    youtube: "EVHlwo8WyJQ",
+    notes: {
+      takeaways: [],
+      chapters: [],
+      links: []
+    } },
   { id: "sessions-dPLrY8C9Dmo", show: "sessions", format: "Talk", date: "2026-11-12", duration: 17,
     title: "What The Wizard of Oz Teaches About Innovation",
     summary: "What if your business is just stringing actions together without moving forward?",
