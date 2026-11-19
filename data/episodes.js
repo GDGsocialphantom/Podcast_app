@@ -1,6 +1,17 @@
 // Episodes. Copy any object to add one; the site sorts by date. Shows with no episodes yet still appear in the sidebar and show list.
 // Transcripts live in data/transcripts/<episode id>.json (fetched by tools/fetch-transcripts.js on GitHub; tools/transcribe.py for clean ones). Run `node tools/check-data.js` before committing.
 const EPISODES = [
+  { id: "sessions-dSv0qXz3ue0", show: "sessions", format: "Talk", date: "2026-11-19", duration: 20,
+    title: "Art From Trash That Speaks Every Language",
+    summary: "What can you say to a whole country when you don’t speak its language?",
+    topics: [],
+    people: [{ n: "Keystone CoLAB", r: "Host" }],
+    youtube: "dSv0qXz3ue0",
+    notes: {
+      takeaways: [],
+      chapters: [],
+      links: []
+    } },
   { id: "sessions-5sa6vGMuq4Y", show: "sessions", format: "Talk", date: "2026-11-17", duration: 21,
     title: "The 33,000-Job Industry Kansas City Ignores",
     summary: "What if one of Kansas City’s biggest industries is one nobody is talking about?",
