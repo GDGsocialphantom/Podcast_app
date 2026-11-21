@@ -18,11 +18,7 @@ const EPISODES = [
     topics: [],
     people: [{ n: "Kevin McGinnis", r: "Host" }],
     youtube: "6881HLw8FXs",
-    notes: {
-      takeaways: [],
-      chapters: [],
-      links: []
-    } },
+    notes: { takeaways: [], chapters: [], links: [["Keystonedistrict", "https://www.keystonedistrict.org/"], ["Righttostart", "https://www.righttostart.org/"]] } },
   { id: "sessions-dSv0qXz3ue0", show: "sessions", format: "Talk", date: "2026-11-19", duration: 20,
     title: "Art From Trash That Speaks Every Language",
     summary: "What can you say to a whole country when you don’t speak its language?",
