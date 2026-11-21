@@ -1,6 +1,28 @@
 // Episodes. Copy any object to add one; the site sorts by date. Shows with no episodes yet still appear in the sidebar and show list.
 // Transcripts live in data/transcripts/<episode id>.json (fetched by tools/fetch-transcripts.js on GitHub; tools/transcribe.py for clean ones). Run `node tools/check-data.js` before committing.
 const EPISODES = [
+  { id: "dl-VTOZn348EqU", show: "disruption", format: "Interview", date: "2026-11-20", duration: 52,
+    title: "Great at Starting, Bad at Surviving: Missouri’s Entrepreneurship Report Card",
+    summary: "Victor Hwang is back, The Disruption Lab's first returning guest, in its first virtual episode. Last time, the founder and CEO of Right to Start made the argument: entrepreneurship is a civic priority. This time he brings the scorecard.",
+    topics: [],
+    people: [{ n: "Kevin McGinnis", r: "Host" }],
+    youtube: "VTOZn348EqU",
+    notes: {
+      takeaways: [],
+      chapters: [],
+      links: []
+    } },
+  { id: "dl-6881HLw8FXs", show: "disruption", format: "Interview", date: "2026-11-20", duration: 52,
+    title: "Great at Starting, Bad at Surviving: Missouri’s Entrepreneurship Report Card",
+    summary: "Starting a business: Missouri beats 74% of America. Keeping it alive: 1.7%. Victor Hwang returns with the report card.",
+    topics: [],
+    people: [{ n: "Kevin McGinnis", r: "Host" }],
+    youtube: "6881HLw8FXs",
+    notes: {
+      takeaways: [],
+      chapters: [],
+      links: []
+    } },
   { id: "sessions-dSv0qXz3ue0", show: "sessions", format: "Talk", date: "2026-11-19", duration: 20,
     title: "Art From Trash That Speaks Every Language",
     summary: "What can you say to a whole country when you don’t speak its language?",
