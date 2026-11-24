@@ -1,6 +1,17 @@
 // Episodes. Copy any object to add one; the site sorts by date. Shows with no episodes yet still appear in the sidebar and show list.
 // Transcripts live in data/transcripts/<episode id>.json (fetched by tools/fetch-transcripts.js on GitHub; tools/transcribe.py for clean ones). Run `node tools/check-data.js` before committing.
 const EPISODES = [
+  { id: "sessions-oFxO6SPsDwc", show: "sessions", format: "Talk", date: "2026-11-24", duration: 19,
+    title: "The Sculptor Who Builds Giant Art From Paper & Zip Ties",
+    summary: "What happens when a trained sculptor decides the materials don’t matter, and the idea does?",
+    topics: [],
+    people: [{ n: "Keystone CoLAB", r: "Host" }],
+    youtube: "oFxO6SPsDwc",
+    notes: {
+      takeaways: [],
+      chapters: [],
+      links: []
+    } },
   { id: "dl-VTOZn348EqU", show: "disruption", format: "Interview", date: "2026-11-20", duration: 52,
     title: "Great at Starting, Bad at Surviving: Missouri’s Entrepreneurship Report Card",
     summary: "Victor Hwang is back, The Disruption Lab's first returning guest, in its first virtual episode. Last time, the founder and CEO of Right to Start made the argument: entrepreneurship is a civic priority. This time he brings the scorecard.",
