@@ -1,6 +1,28 @@
 // Episodes. Copy any object to add one; the site sorts by date. Shows with no episodes yet still appear in the sidebar and show list.
 // Transcripts live in data/transcripts/<episode id>.json (fetched by tools/fetch-transcripts.js on GitHub; tools/transcribe.py for clean ones). Run `node tools/check-data.js` before committing.
 const EPISODES = [
+  { id: "dl-RRru7w_ccTA", show: "disruption", format: "Interview", date: "2026-11-27", duration: 40,
+    title: "From \"Who, Us?\" to Swagger: What the World Cup Really Built in Kansas City",
+    summary: "In 2000, building a global company from Kansas City sounded like a punchline. Investors wouldn't back what they couldn't touch, and the city's biggest barrier wasn't talent or money. It was belief.",
+    topics: [],
+    people: [{ n: "Kevin McGinnis", r: "Host" }],
+    youtube: "RRru7w_ccTA",
+    notes: {
+      takeaways: [],
+      chapters: [],
+      links: []
+    } },
+  { id: "dl-K4OLpXVpk7o", show: "disruption", format: "Interview", date: "2026-11-27", duration: 40,
+    title: "From \"Who, Us?\" to Swagger: What the World Cup Really Built in Kansas City",
+    summary: "What does a city gain when it stops asking \"Who, us?\" And what does it cost if it loses that confidence?",
+    topics: [],
+    people: [{ n: "Kevin McGinnis", r: "Host" }],
+    youtube: "K4OLpXVpk7o",
+    notes: {
+      takeaways: [],
+      chapters: [],
+      links: []
+    } },
   { id: "sessions-oFxO6SPsDwc", show: "sessions", format: "Talk", date: "2026-11-24", duration: 19,
     title: "The Sculptor Who Builds Giant Art From Paper & Zip Ties",
     summary: "What happens when a trained sculptor decides the materials don’t matter, and the idea does?",
